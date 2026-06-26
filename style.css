@@ -1,0 +1,61 @@
+/* ===============================
+   BharatVarshOfficial v2
+   Premium Style Sheet
+================================ */
+
+:root{
+    --bg:#0d1117;
+    --card:#161b22;
+    --primary:#ff9933;
+    --secondary:#138808;
+    --text:#ffffff;
+    --gray:#b0b0b0;
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+    --radius:16px;
+    --transition:.3s ease;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;line-height:1.6}
+.navbar{position:sticky;top:0;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:18px 8%;background:#111;border-bottom:2px solid var(--primary)}
+.logo{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:bold}
+.logo img{width:52px;height:52px}
+.menu{display:flex;list-style:none;gap:25px}
+.menu a{color:#fff;text-decoration:none;transition:var(--transition)}
+.menu a:hover{color:var(--primary)}
+.hero{min-height:90vh;display:flex;justify-content:center;align-items:center;text-align:center;padding:80px 20px;background:linear-gradient(rgba(0,0,0,.65),rgba(0,0,0,.65)),url("../images/hero.jpg");background-size:cover;background-position:center}
+.hero h1{font-size:3rem;margin-bottom:20px}
+.hero p{color:var(--gray);font-size:18px;margin-bottom:35px}
+.search-box{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:30px}
+.search-box input{width:420px;max-width:90%;padding:15px;border:none;border-radius:50px;font-size:16px}
+.search-box button{padding:15px 28px;border:none;border-radius:50px;background:var(--primary);font-weight:bold;cursor:pointer;transition:var(--transition)}
+.search-box button:hover{transform:translateY(-2px)}
+.btn{display:inline-block;padding:16px 35px;background:var(--primary);color:#111;text-decoration:none;border-radius:50px;font-weight:bold;transition:var(--transition)}
+.btn:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+section{padding:80px 8%}
+section h2{text-align:center;margin-bottom:40px;color:var(--primary);font-size:2.2rem}
+.category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:25px}
+.card{background:var(--card);padding:35px;text-align:center;border-radius:var(--radius);transition:var(--transition);box-shadow:var(--shadow);cursor:pointer}
+.card:hover{transform:translateY(-8px);border:1px solid var(--primary)}
+.wallpaper-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:30px}
+.wallpaper-card{background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:var(--transition)}
+.wallpaper-card:hover{transform:translateY(-10px)}
+.wallpaper-card img{width:100%;height:240px;object-fit:cover}
+.wallpaper-card h3{padding:15px}
+.wallpaper-card p{padding:0 15px 15px;color:var(--gray)}
+.wallpaper-card button{margin:15px;padding:12px 20px;border:none;border-radius:30px;background:var(--primary);cursor:pointer;font-weight:bold}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:25px;text-align:center}
+.stats div{background:var(--card);padding:40px;border-radius:var(--radius);box-shadow:var(--shadow)}
+.stats h2{color:var(--primary)}
+footer{background:#111;padding:40px;text-align:center;border-top:2px solid var(--primary)}
+.footer-links{margin-top:15px}
+.footer-links a{color:#fff;text-decoration:none;margin:0 15px}
+.footer-links a:hover{color:var(--primary)}
+@media(max-width:768px){
+.navbar{flex-direction:column;gap:15px}
+.menu{flex-wrap:wrap;justify-content:center}
+.hero h1{font-size:2.1rem}
+.search-box{flex-direction:column}
+.search-box input,.btn{width:100%}
+}
