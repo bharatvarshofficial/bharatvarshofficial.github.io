@@ -132,6 +132,6 @@ if (menuBtn && navbar) {
   menuBtn.addEventListener("click", () => {
     navbar.classList.toggle("show");
     // Change menu icon when opened
-    menuBtn.innerHTML = navbar.classList.contains("show") ? "✖" : "☰";
+    menuBtn.innerHTML = navbar.classList.contains("show") ? "✖" : "☰" : “+” ;
   });
 }
