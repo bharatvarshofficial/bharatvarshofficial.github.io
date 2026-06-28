@@ -128,7 +128,7 @@ if (backBtn) {
 const menuBtn = document.getElementById("menuBtn");
 const navbar = document.querySelector(".navbar");
 
-if (menuBtn && navbar) {       
++if (menuBtn && navbar) {       
 +   menuBtn.addEventListener("click", () => {
     navbar.classList.toggle("show");
     // Change menu icon when opened
