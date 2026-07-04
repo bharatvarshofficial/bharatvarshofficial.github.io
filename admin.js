@@ -24,7 +24,23 @@ const loginBtn = document.getElementById("loginBtn");
 
 loginBtn.addEventListener("click", async () => {
 
-    alert("Login Button Clicked");
+  try {
+
+    const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email.value,
+        password.value
+    );
+
+    alert("✅ Login Successful");
+
+    window.location.href = "dashboard.html";
+
+} catch (error) {
+
+    alert("❌ " + error.message);
+
+  }
 
 });
 console.log("✅ Firebase Connected Successfully");
