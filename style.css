@@ -455,7 +455,7 @@ img {
 
 /* MOBILE RESPONSIVE */
 @media(max-width: 992px) {
-  .header { padding: 15px 5%; }
+  .header { padding: 12px 5%; }
   .hero-content { flex-direction: column; text-align: center; gap: 40px; }
   .hero-right h1 { font-size: 44px; }
   .hero-logo { width: 240px; }
