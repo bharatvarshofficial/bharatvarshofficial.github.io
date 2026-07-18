@@ -34,6 +34,17 @@
 
 /* BODY */
 body {
+   .orange{
+    color:#ff8a00;
+}
+
+.white{
+    color:#ffffff;
+}
+
+.green{
+    color:#27c93f;
+}
   background: var(--bg);
   color: var(--white);
   font-family: 'Poppins', sans-serif;
@@ -76,12 +87,12 @@ img {
 .logo {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
 }
 
 .logo img {
-  width: 55px;
-  height: 55px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
 }
 
@@ -96,7 +107,7 @@ img {
 
 .logo p {
   color: var(--gray);
-  font-size: 12px;
+  font-size: 13px;
   margin-top: 2px;
 }
 
