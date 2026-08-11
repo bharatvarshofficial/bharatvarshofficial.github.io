@@ -32,6 +32,19 @@
   --border: #e0e0e0;
 }
 
+/* COLORS */
+.orange {
+  color: var(--orange);
+}
+
+.white {
+  color: var(--white);
+}
+
+.green {
+  color: var(--green);
+}
+
 /* BODY */
 body {
   background: var(--bg);
@@ -76,12 +89,12 @@ img {
 .logo {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
 }
 
 .logo img {
-  width: 55px;
-  height: 55px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
 }
 
@@ -91,17 +104,9 @@ img {
   letter-spacing: 1px;
 }
 
-.orange {
-  color: var(--orange);
-}
-
-.green {
-  color: var(--green);
-}
-
 .logo p {
   color: var(--gray);
-  font-size: 12px;
+  font-size: 13px;
   margin-top: 2px;
 }
 
@@ -204,7 +209,7 @@ img {
 }
 
 .hero-right h1 {
-  font-size: 64px;
+  font-size: 34px;
   line-height: 1.1;
   font-weight: 800;
   margin-bottom: 20px;
@@ -266,7 +271,7 @@ img {
 @keyframes floatLogo {
   0%,
   100% {
-    transform: translateY(0px);
+    transform: translateY(0);
   }
 
   50% {
@@ -389,7 +394,7 @@ img {
 
 .card img {
   width: 100%;
-  height: 340px;
+  height: 240px;
   object-fit: cover;
 }
 
@@ -552,13 +557,13 @@ img {
   font-size: 14px;
 }
 
-/* BACK TO TOP & LOADER */
+/* BACK TO TOP */
 #backToTop {
   position: fixed;
-  right: 25px;
-  bottom: 25px;
-  width: 48px;
-  height: 48px;
+  right: 15px;
+  bottom: 15px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: 50%;
   background: var(--orange);
@@ -570,6 +575,7 @@ img {
   z-index: 99;
 }
 
+/* LOADER */
 #loader {
   position: fixed;
   top: 0;
@@ -592,8 +598,20 @@ img {
   animation: spin 1s linear infinite;
 }
 
+/* ASHOK CHAKRA */
+.ashok-chakra {
+  width: 120px;
+  height: 120px;
+  animation: spin 2.5s linear infinite;
+  filter: drop-shadow(0 0 20px rgba(0, 0, 255, 0.4));
+}
+
 @keyframes spin {
-  100% {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
     transform: rotate(360deg);
   }
 }
@@ -601,7 +619,7 @@ img {
 /* MOBILE RESPONSIVE */
 @media (max-width: 992px) {
   .header {
-    padding: 15px 5%;
+    padding: 12px 5%;
   }
 
   .hero-content {
@@ -676,4 +694,3 @@ img {
     text-align: center;
   }
 }
-
