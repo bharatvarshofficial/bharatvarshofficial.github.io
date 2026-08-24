@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>BharatVarshOfficial | Admin Dashboard</title>
+
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+
+    <!-- ==============================
+         TOP NAVBAR
+    =============================== -->
+
+    <header class="topbar">
+
+        <div class="brand">
+            <span class="brand-flag">🇮🇳</span>
+
+            <div>
+                <h1>BharatVarshOfficial</h1>
+                <p>Admin Dashboard</p>
+            </div>
+        </div>
+
+        <div class="top-actions">
+            <span id="adminEmail">Checking...</span>
+
+            <button id="logoutBtn" class="logout-btn">
+                Logout
+            </button>
+        </div>
+
+    </header>
+
+
+    <!-- ==============================
+         MAIN DASHBOARD
+    =============================== -->
+
+    <main class="dashboard">
+
+        <!-- Page Header -->
+
+        <section class="page-header">
+
+            <div>
+                <h2>Media Manager</h2>
+
+                <p>
+                    Upload and manage BharatVarshOfficial
+                    wallpapers, images and videos.
+                </p>
+            </div>
+
+        </section>
+
+
+        <!-- ==============================
+             STAT CARDS
+        =============================== -->
+
+        <section class="stats-grid">
+
+            <div class="stat-card">
+                <div class="stat-icon">🖼️</div>
+
+                <div>
+                    <span>Wallpapers</span>
+                    <strong id="wallpaperCount">0</strong>
+                </div>
+            </div>
+
+
+            <div class="stat-card">
+                <div class="stat-icon">📷</div>
+
+                <div>
+                    <span>Images</span>
+                    <strong id="imageCount">0</strong>
+                </div>
+            </div>
+
+
+            <div class="stat-card">
+                <div class="stat-icon">🎬</div>
+
+                <div>
+                    <span>Videos</span>
+                    <strong id="videoCount">0</strong>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- ==============================
+             UPLOAD SECTION
+        =============================== -->
+
+        <section class="upload-section">
+
+            <div class="section-title">
+
+                <div>
+                    <h2>Upload Media</h2>
+
+                    <p>
+                        Add a new wallpaper, image or video.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <form id="mediaForm">
+
+                <!-- Media Type -->
+
+                <div class="form-group">
+
+                    <label for="mediaType">
+                        Media Type
+                    </label>
+
+                    <select id="mediaType" required>
+
+                        <option value="wallpapers">
+                            🖼️ Wallpaper
+                        </option>
+
+                        <option value="images">
+                            📷 Image
+                        </option>
+
+                        <option value="videos">
+                            🎬 Video
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- File -->
+
+                <div class="form-group">
+
+                    <label for="mediaFile">
+                        Select File
+                    </label>
+
+                    <input
+                        type="file"
+                        id="mediaFile"
+                        required
+                    >
+
+                    <small id="fileHelp">
+                        Supported image formats:
+                        JPG, PNG, WebP
+                    </small>
+
+                </div>
+
+
+                <!-- Preview -->
+
+                <div
+                    id="previewContainer"
+                    class="preview-container hidden"
+                >
+
+                    <p class="preview-title">
+                        Preview
+                    </p>
+
+                    <img
+                        id="imagePreview"
+                        class="image-preview hidden"
+                        alt="Preview"
+                    >
+
+                    <video
+                        id="videoPreview"
+                        class="video-preview hidden"
+                        controls
+                    ></video>
+
+                </div>
+
+
+                <!-- Title -->
+
+                <div class="form-group">
+
+                    <label for="mediaTitle">
+                        Title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="mediaTitle"
+                        placeholder="Example: Chhatrapati Shivaji Maharaj"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Category -->
+
+                <div class="form-group">
+
+                    <label for="mediaCategory">
+                        Category
+                    </label>
+
+                    <select id="mediaCategory" required>
+
+                        <option value="">
+                            Select Category
+                        </option>
+
+                        <option value="Shivaji Maharaj">
+                            Shivaji Maharaj
+                        </option>
+
+                        <option value="Indian Army">
+                            Indian Army
+                        </option>
+
+                        <option value="Freedom Fighters">
+                            Freedom Fighters
+                        </option>
+
+                        <option value="Temples">
+                            Temples
+                        </option>
+
+                        <option value="Festivals">
+                            Festivals
+                        </option>
+
+                        <option value="Nature">
+                            Nature
+                        </option>
+
+                        <option value="Anime">
+                            Anime
+                        </option>
+
+                        <option value="Other">
+                            Other
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Description -->
+
+                <div class="form-group">
+
+                    <label for="mediaDescription">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="mediaDescription"
+                        rows="4"
+                        placeholder="Write a short description..."
+                    ></textarea>
+
+                </div>
+
+
+                <!-- URL -->
+
+                <div class="form-group">
+
+                    <label for="mediaUrl">
+                        Media URL
+                    </label>
+
+                    <input
+                        type="url"
+                        id="mediaUrl"
+                        placeholder="https://example.com/media.jpg"
+                        required
+                    >
+
+                    <small>
+                        For now, enter the public Cloudflare R2
+                        media URL manually.
+                    </small>
+
+                </div>
+
+
+                <!-- Options -->
+
+                <div class="options-row">
+
+                    <label class="check-option">
+
+                        <input
+                            type="checkbox"
+                            id="trending"
+                        >
+
+                        <span>
+                            🔥 Trending
+                        </span>
+
+                    </label>
+
+
+                    <label class="check-option">
+
+                        <input
+                            type="checkbox"
+                            id="featured"
+                        >
+
+                        <span>
+                            ⭐ Featured
+                        </span>
+
+                    </label>
+
+                </div>
+
+
+                <!-- Submit -->
+
+                <button
+                    type="submit"
+                    id="publishBtn"
+                    class="publish-btn"
+                >
+                    🚀 Publish Media
+                </button>
+
+
+                <!-- Status -->
+
+                <div
+                    id="statusMessage"
+                    class="status-message hidden"
+                ></div>
+
+            </form>
+
+        </section>
+
+
+        <!-- ==============================
+             RECENT MEDIA
+        =============================== -->
+
+        <section class="recent-section">
+
+            <div class="section-title">
+
+                <div>
+                    <h2>Recently Added</h2>
+
+                    <p>
+                        Latest media available in Firestore.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div
+                id="recentMedia"
+                class="media-grid"
+            >
+
+                <div class="empty-state">
+                    Loading media...
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- Firebase / Dashboard JS -->
+
+    <script
+        type="module"
+        src="./dashboard.js"
+    ></script>
+
+</body>
+</html>

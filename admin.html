@@ -1,30 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BharatVarshOfficial Admin</title>
 
-    <link rel="stylesheet" href="admin.css">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>BharatVarshOfficial | Admin Login</title>
+
+    <link
+        rel="stylesheet"
+        href="./admin.css"
+    >
+
 </head>
+
+
 <body>
 
-<div class="login-container">
 
-    <h1>BharatVarshOfficial</h1>
-    <h2>Admin Login</h2>
+    <main class="login-container">
 
-    <input type="email" id="email" placeholder="Enter Email">
+        <div class="logo">
+            🇮🇳
+        </div>
 
-    <input type="password" id="password" placeholder="Enter Password">
 
-    <button id="loginBtn">
-        Login
-    </button>
+        <h1>
+            BharatVarshOfficial
+        </h1>
 
-</div>
 
-<script type="module" src="admin.js"></script>
+        <h2>
+            Admin Login
+        </h2>
+
+
+        <!-- =========================
+             EMAIL
+        ========================== -->
+
+        <label
+            for="email"
+            class="input-label"
+        >
+            Admin Email
+        </label>
+
+        <input
+            type="email"
+            id="email"
+            placeholder="Enter admin email"
+            autocomplete="email"
+            required
+        >
+
+
+        <!-- =========================
+             PASSWORD
+        ========================== -->
+
+        <label
+            for="password"
+            class="input-label"
+        >
+            Password
+        </label>
+
+        <div class="password-wrapper">
+
+            <input
+                type="password"
+                id="password"
+                placeholder="Enter password"
+                autocomplete="current-password"
+                required
+            >
+
+            <button
+                type="button"
+                id="togglePassword"
+                class="password-toggle"
+                aria-label="Show password"
+            >
+                👁️
+            </button>
+
+        </div>
+
+
+        <!-- =========================
+             LOGIN BUTTON
+        ========================== -->
+
+        <button
+            type="button"
+            id="loginBtn"
+            class="login-btn"
+        >
+            🔐 Login
+        </button>
+
+
+        <!-- =========================
+             FORGOT PASSWORD
+        ========================== -->
+
+        <button
+            type="button"
+            id="forgotPassword"
+            class="forgot-btn"
+        >
+            Forgot Password?
+        </button>
+
+
+        <!-- =========================
+             STATUS
+        ========================== -->
+
+        <div
+            id="statusMessage"
+            class="status-message hidden"
+        ></div>
+
+
+        <!-- =========================
+             SECURITY NOTE
+        ========================== -->
+
+        <p class="security-note">
+            🔒 Authorized administrators only
+        </p>
+
+    </main>
+
+
+    <!-- Firebase Admin JS -->
+
+    <script
+        type="module"
+        src="./admin.js"
+    ></script>
+
 
 </body>
+
 </html>

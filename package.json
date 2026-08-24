@@ -22,5 +22,8 @@
   "homepage": "https://github.com/bharatvarshofficial/bharatvarshofficial.github.io#readme",
   "devDependencies": {
     "vite": "^8.2.1"
+  },
+  "dependencies": {
+    "firebase": "^12.17.1"
   }
 }
