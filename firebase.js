@@ -6,6 +6,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 import {
     getAuth,
     GoogleAuthProvider
@@ -39,6 +40,13 @@ const app = initializeApp(firebaseConfig);
 // ==========================================
 
 const db = getFirestore(app);
+
+
+// ==========================================
+// FIREBASE STORAGE
+// ==========================================
+
+const storage = getStorage(app);
 
 
 // ==========================================
@@ -102,6 +110,7 @@ isSupported()
 export {
     app,
     db,
+    storage,
     auth,
     googleProvider,
     analytics

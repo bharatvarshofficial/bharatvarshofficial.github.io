@@ -34,6 +34,13 @@ import {
     auth
 } from "./firebase.js";
 
+import {
+    CATEGORY_LABELS,
+    canonicalizeCategory,
+    categoriesEqual,
+    mergeCategoryLabels
+} from "./categories.js";
+
 
 // ============================================================
 // GLOBAL STATE
@@ -743,7 +750,13 @@ async function loadWallpapers() {
                             id:
                                 document.id,
 
-                            ...data
+                            ...data,
+
+                            category:
+                                canonicalizeCategory(
+                                    data.category ||
+                                    data.categoryKey
+                                )
 
                         };
 
@@ -795,12 +808,26 @@ async function loadWallpapers() {
 
             STATE.wallpapers =
                 fallbackSnapshot.docs.map(
-                    document => ({
-                        id:
-                            document.id,
+                    document => {
 
-                        ...document.data()
-                    })
+                        const data =
+                            document.data();
+
+
+                        return {
+                            id:
+                                document.id,
+
+                            ...data,
+
+                            category:
+                                canonicalizeCategory(
+                                    data.category ||
+                                    data.categoryKey
+                                )
+                        };
+
+                    }
                 );
 
 
@@ -1566,9 +1593,10 @@ async function loadCategories() {
                         document.data();
 
 
-                    return (
+                    return canonicalizeCategory(
                         data.name ||
                         data.title ||
+                        data.key ||
                         document.id
                     );
 
@@ -1580,45 +1608,23 @@ async function loadCategories() {
             STATE.wallpapers
                 .map(
                     wallpaper =>
-                        wallpaper.category
+                        canonicalizeCategory(
+                            wallpaper.category ||
+                            wallpaper.categoryKey
+                        )
                 )
                 .filter(Boolean);
-
-
-        const defaultCategories = [
-
-            "Chhatrapati Shivaji Maharaj",
-
-            "Indian Army",
-
-            "Freedom Fighters",
-
-            "Temples",
-
-            "Festivals",
-
-            "Indian Culture",
-
-            "Nature / India",
-
-            "Anime",
-
-            "Country"
-
-        ];
 
 
         STATE.categories =
             [
                 "All",
 
-                ...new Set([
-                    ...defaultCategories,
-
-                    ...firestoreCategories,
-
-                    ...wallpaperCategories
-                ])
+                ...mergeCategoryLabels(
+                    CATEGORY_LABELS,
+                    firestoreCategories,
+                    wallpaperCategories
+                )
             ];
 
 
@@ -1635,15 +1641,7 @@ async function loadCategories() {
 
         STATE.categories = [
             "All",
-            "Chhatrapati Shivaji Maharaj",
-            "Indian Army",
-            "Freedom Fighters",
-            "Temples",
-            "Festivals",
-            "Indian Culture",
-            "Nature / India",
-            "Anime",
-            "Country"
+            ...CATEGORY_LABELS
         ];
 
 
@@ -1669,8 +1667,14 @@ function renderCategories() {
                 category => {
 
                     const active =
-                        category ===
-                        STATE.currentCategory
+                        (
+                            category === "All" &&
+                            STATE.currentCategory === "All"
+                        ) ||
+                        categoriesEqual(
+                            category,
+                            STATE.currentCategory
+                        )
                             ? "active"
                             : "";
 
@@ -1702,14 +1706,16 @@ function filterByCategory(
 ) {
 
     STATE.currentCategory =
-        category;
+        ["All", "Favourites"].includes(category)
+            ? category
+            : canonicalizeCategory(category);
 
 
     STATE.currentPage =
         1;
 
 
-    if (category === "All") {
+    if (STATE.currentCategory === "All") {
 
         STATE.filteredWallpapers =
             [...STATE.wallpapers];
@@ -1717,7 +1723,7 @@ function filterByCategory(
     }
 
     else if (
-        category === "Favourites"
+        STATE.currentCategory === "Favourites"
     ) {
 
         if (!STATE.currentUser) {
@@ -1746,11 +1752,10 @@ function filterByCategory(
                 wallpaper => {
 
                     return (
-                        normalizeCategory(
-                            wallpaper.category
-                        ) ===
-                        normalizeCategory(
-                            category
+                        categoriesEqual(
+                            wallpaper.category ||
+                            wallpaper.categoryKey,
+                            STATE.currentCategory
                         )
                     );
 
@@ -1815,10 +1820,9 @@ function performSearch(
             results =
                 results.filter(
                     wallpaper =>
-                        normalizeCategory(
-                            wallpaper.category
-                        ) ===
-                        normalizeCategory(
+                        categoriesEqual(
+                            wallpaper.category ||
+                            wallpaper.categoryKey,
                             STATE.currentCategory
                         )
                 );
@@ -3043,42 +3047,6 @@ function getImageExtension(
         return "jpg";
 
     }
-
-}
-
-
-// ============================================================
-// NORMALIZE CATEGORY
-// ============================================================
-
-function normalizeCategory(
-    value
-) {
-
-    const normalized =
-        String(value || "")
-            .trim()
-            .toLowerCase()
-            .replace(
-                /\s*\/\s*/g,
-                " / "
-            )
-            .replace(
-                /\s+/g,
-                " "
-            );
-
-    const aliases = {
-        "shivaji maharaj":
-            "chhatrapati shivaji maharaj",
-        "nature":
-            "nature / india",
-        "india nature":
-            "nature / india"
-    };
-
-    return aliases[normalized] ||
-        normalized;
 
 }
 
