@@ -1,0 +1,89 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.uid == "hGrTepDbtsaCoSQL5D2bBG0iZzD2";
+    }
+
+    function isOwner(userId) {
+      return isSignedIn()
+        && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId;
+
+      allow update: if isOwner(userId);
+      allow delete: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /wallpapers/{wallpaperId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+
+      allow update: if
+        request.resource.data
+          .diff(resource.data)
+          .affectedKeys()
+          .hasOnly(['downloads', 'updatedAt'])
+        && request.resource.data.downloads
+          == resource.data.get('downloads', 0) + 1
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    match /images/{imageId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /videos/{videoId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /newsletter/{subscriberId} {
+      allow read, delete: if isAdmin();
+
+      allow create: if
+        request.resource.data.keys().hasOnly([
+          'email',
+          'subscribedAt',
+          'active'
+        ])
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 3
+        && request.resource.data.email.size() <= 254
+        && request.resource.data.active == true
+        && request.resource.data.subscribedAt == request.time;
+
+      allow update: if
+        request.resource.data.keys().hasOnly([
+          'email',
+          'subscribedAt',
+          'active'
+        ])
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.active == true
+        && request.resource.data.subscribedAt == request.time;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
