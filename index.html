@@ -26,7 +26,7 @@
 
     <link
         rel="icon"
-        href="assets/favicon.png"
+        href="assets/logo.png"
     >
 
     <!-- Google Fonts -->
@@ -381,6 +381,7 @@
             id="menuBtn"
             title="Menu"
             aria-label="Open Menu"
+            aria-expanded="false"
         >
             ☰
         </button>
@@ -558,9 +559,16 @@
 
 
     <button
-        data-category="Nature"
+        data-category="Indian Culture"
     >
-        Nature
+        Indian Culture
+    </button>
+
+
+    <button
+        data-category="Nature / India"
+    >
+        Nature / India
     </button>
 
 
@@ -590,9 +598,18 @@
     id="featured"
 >
 
-    <h2>
-        Featured Wallpapers
-    </h2>
+    <div class="featured-heading">
+
+        <h2>
+            Featured Wallpapers
+        </h2>
+
+        <p>
+            <span id="wallpaperCount">0</span>
+            wallpapers found
+        </p>
+
+    </div>
 
 
     <!--
@@ -621,6 +638,18 @@
             </p>
 
         </div>
+
+    </div>
+
+    <div class="load-more-wrapper">
+
+        <button
+            type="button"
+            id="loadMoreButton"
+            class="load-more-button"
+        >
+            Load More
+        </button>
 
     </div>
 
@@ -675,6 +704,9 @@
             id="mobileLoginBtn"
             class="login-btn mobile-login"
             type="button"
+            disabled
+            aria-disabled="true"
+            title="Mobile OTP login will be added in a later verified phase"
         >
 
             <span class="login-icon">
@@ -686,6 +718,34 @@
             </span>
 
         </button>
+
+
+        <div
+            id="userProfile"
+            class="user-profile"
+            hidden
+        >
+
+            <img
+                id="userPhoto"
+                class="user-photo"
+                alt="Signed-in user profile"
+            >
+
+            <div class="user-details">
+                <strong id="userName">BharatVarsh User</strong>
+                <span id="userEmail"></span>
+            </div>
+
+            <button
+                type="button"
+                id="logoutButton"
+                class="logout-button"
+            >
+                Logout
+            </button>
+
+        </div>
 
 
         <p class="login-note">
@@ -900,9 +960,17 @@
 
             <a
                 href="#categories"
-                data-footer-category="Nature"
+                data-footer-category="Indian Culture"
             >
-                Nature
+                Indian Culture
+            </a>
+
+
+            <a
+                href="#categories"
+                data-footer-category="Nature / India"
+            >
+                Nature / India
             </a>
 
 
@@ -927,7 +995,10 @@
 
         <!-- Newsletter -->
 
-        <div class="newsletter">
+        <form
+            class="newsletter"
+            id="newsletterForm"
+        >
 
             <h3>
                 Newsletter
@@ -949,13 +1020,13 @@
 
 
             <button
-                type="button"
+                type="submit"
                 id="newsletterBtn"
             >
                 Subscribe
             </button>
 
-        </div>
+        </form>
 
     </div>
 
@@ -965,7 +1036,7 @@
 
     <div class="copyright">
 
-        © 2026 BharatVarshOfficial.
+        © <span data-current-year>2026</span> BharatVarshOfficial.
         All Rights Reserved.
         Made with ❤️ for Bharat.
 

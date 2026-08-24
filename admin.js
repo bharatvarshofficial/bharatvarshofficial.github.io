@@ -6,60 +6,17 @@
 
 
 // ==========================================
-// FIREBASE IMPORTS
+// FIREBASE SERVICES
 // ==========================================
 
 import {
-    initializeApp
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-
-
-import {
-    getAuth,
     signInWithEmailAndPassword,
     sendPasswordResetEmail
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+} from "firebase/auth";
 
-
-// ==========================================
-// FIREBASE CONFIGURATION
-// ==========================================
-
-const firebaseConfig = {
-
-    apiKey:
-        "AIzaSyAWnWt1ye6c_W259Fv1jI_KupRk5wq4kGE",
-
-    authDomain:
-        "bharatvarshofficial-21a59.firebaseapp.com",
-
-    projectId:
-        "bharatvarshofficial-21a59",
-
-    storageBucket:
-        "bharatvarshofficial-21a59.firebasestorage.app",
-
-    messagingSenderId:
-        "182316736380",
-
-    appId:
-        "1:182316736380:web:a934fa35bd53c011b20ef9",
-
-    measurementId:
-        "G-QS2Y0V3CLE"
-};
-
-
-// ==========================================
-// INITIALIZE FIREBASE
-// ==========================================
-
-const app =
-    initializeApp(firebaseConfig);
-
-
-const auth =
-    getAuth(app);
+import {
+    auth
+} from "./firebase.js";
 
 
 console.log(
@@ -272,7 +229,7 @@ loginBtn.addEventListener(
                 () => {
 
                     window.location.href =
-                        "dashboard.html";
+                        "./css/js/firebase/dashboard.html";
 
                 },
                 700

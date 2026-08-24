@@ -16,10 +16,6 @@ import {
     doc,
     setDoc,
     updateDoc,
-    deleteDoc,
-    query,
-    orderBy,
-    limit,
     increment,
     arrayUnion,
     arrayRemove,
@@ -36,7 +32,7 @@ import {
 import {
     db,
     auth
-} from "./firebase-config.js";
+} from "./firebase.js";
 
 
 // ============================================================
@@ -103,9 +99,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         initializeAuthentication();
 
-        await loadCategories();
-
         await loadWallpapers();
+
+        await loadCategories();
 
         STATE.initialized = true;
 
@@ -122,6 +118,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             "Website load करताना समस्या आली.",
             "error"
         );
+    } finally {
+
+        hidePageLoader();
     }
 
 });
@@ -141,10 +140,16 @@ function cacheDOM() {
             "#wallpaperGrid"
         ) ||
         document.querySelector(
+            "#wallpaperGallery"
+        ) ||
+        document.querySelector(
             ".wallpaper-grid"
         ) ||
         document.querySelector(
             ".wallpapers-grid"
+        ) ||
+        document.querySelector(
+            ".gallery"
         );
 
     DOM.categoryContainer =
@@ -169,14 +174,14 @@ function cacheDOM() {
     DOM.searchButton =
         document.querySelector(
             "#searchButton"
+        ) ||
+        document.querySelector(
+            "#searchBtn"
         );
 
     DOM.loginButton =
         document.querySelector(
             "#loginButton"
-        ) ||
-        document.querySelector(
-            ".login-btn"
         );
 
     DOM.logoutButton =
@@ -190,6 +195,14 @@ function cacheDOM() {
         ) ||
         document.querySelector(
             "#google-login"
+        ) ||
+        document.querySelector(
+            "#googleLoginBtn"
+        );
+
+    DOM.mobileLoginButton =
+        document.querySelector(
+            "#mobileLoginBtn"
         );
 
     DOM.loginModal =
@@ -239,11 +252,17 @@ function cacheDOM() {
         ) ||
         document.querySelector(
             "#themeToggle"
+        ) ||
+        document.querySelector(
+            "#darkMode"
         );
 
     DOM.mobileMenuButton =
         document.querySelector(
             "#mobileMenuButton"
+        ) ||
+        document.querySelector(
+            "#menuBtn"
         ) ||
         document.querySelector(
             ".mobile-menu-button"
@@ -258,6 +277,9 @@ function cacheDOM() {
         ) ||
         document.querySelector(
             ".mobile-menu"
+        ) ||
+        document.querySelector(
+            ".navbar"
         );
 
     DOM.newsletterForm =
@@ -285,6 +307,16 @@ function cacheDOM() {
             "#loading"
         );
 
+    DOM.backToTop =
+        document.querySelector(
+            "#backToTop"
+        );
+
+    DOM.loginSection =
+        document.querySelector(
+            "#login"
+        );
+
 }
 
 
@@ -300,6 +332,31 @@ function initializeWebsite() {
 
     debugLog(
         "BharatVarshOfficial started."
+    );
+
+}
+
+
+// ============================================================
+// PAGE LOADER
+// ============================================================
+
+function hidePageLoader() {
+
+    const loader =
+        document.querySelector(
+            "#loader"
+        );
+
+    if (!loader) return;
+
+    loader.classList.add(
+        "loader-hidden"
+    );
+
+    window.setTimeout(
+        () => loader.remove(),
+        500
     );
 
 }
@@ -463,6 +520,20 @@ function updateUserUI(user) {
 
     }
 
+    if (DOM.googleLoginButton) {
+
+        DOM.googleLoginButton.style.display =
+            "none";
+
+    }
+
+    if (DOM.mobileLoginButton) {
+
+        DOM.mobileLoginButton.style.display =
+            "none";
+
+    }
+
 
     if (DOM.logoutButton) {
 
@@ -473,6 +544,9 @@ function updateUserUI(user) {
 
 
     if (DOM.userProfile) {
+
+        DOM.userProfile.hidden =
+            false;
 
         DOM.userProfile.style.display =
             "flex";
@@ -532,6 +606,20 @@ function updateGuestUI() {
 
     }
 
+    if (DOM.googleLoginButton) {
+
+        DOM.googleLoginButton.style.display =
+            "inline-flex";
+
+    }
+
+    if (DOM.mobileLoginButton) {
+
+        DOM.mobileLoginButton.style.display =
+            "inline-flex";
+
+    }
+
 
     if (DOM.logoutButton) {
 
@@ -542,6 +630,9 @@ function updateGuestUI() {
 
 
     if (DOM.userProfile) {
+
+        DOM.userProfile.hidden =
+            true;
 
         DOM.userProfile.style.display =
             "none";
@@ -554,6 +645,57 @@ function updateGuestUI() {
 // ============================================================
 // 4. WALLPAPER LOADING
 // ============================================================
+
+function getWallpaperTimestamp(wallpaper) {
+
+    const value = wallpaper.createdAt;
+
+    if (!value) return 0;
+
+    if (typeof value.toMillis === "function") {
+        return value.toMillis();
+    }
+
+    if (typeof value.seconds === "number") {
+        return value.seconds * 1000;
+    }
+
+    const timestamp = new Date(value).getTime();
+
+    return Number.isFinite(timestamp)
+        ? timestamp
+        : 0;
+
+}
+
+
+function sortWallpapersNewestFirst(wallpapers) {
+
+    return [...wallpapers].sort(
+        (first, second) => {
+
+            const timestampDifference =
+                getWallpaperTimestamp(second) -
+                getWallpaperTimestamp(first);
+
+            if (timestampDifference !== 0) {
+                return timestampDifference;
+            }
+
+            const firstTitle = String(
+                first.title || first.name || first.id || ""
+            );
+
+            const secondTitle = String(
+                second.title || second.name || second.id || ""
+            );
+
+            return firstTitle.localeCompare(secondTitle);
+
+        }
+    );
+
+}
 
 async function loadWallpapers() {
 
@@ -581,41 +723,32 @@ async function loadWallpapers() {
             );
 
 
-        const wallpapersQuery =
-            query(
-                wallpapersRef,
-                orderBy(
-                    "createdAt",
-                    "desc"
-                ),
-                limit(500)
-            );
-
-
         const snapshot =
             await getDocs(
-                wallpapersQuery
+                wallpapersRef
             );
 
 
         STATE.wallpapers =
-            snapshot.docs.map(
-                document => {
+            sortWallpapersNewestFirst(
+                snapshot.docs.map(
+                    document => {
 
-                    const data =
-                        document.data();
+                        const data =
+                            document.data();
 
 
-                    return {
+                        return {
 
-                        id:
-                            document.id,
+                            id:
+                                document.id,
 
-                        ...data
+                            ...data
 
-                    };
+                        };
 
-                }
+                    }
+                )
             );
 
 
@@ -715,6 +848,8 @@ function renderWallpapers() {
     const wallpapers =
         STATE.filteredWallpapers;
 
+    updateWallpaperCount();
+
 
     if (!wallpapers.length) {
 
@@ -757,6 +892,33 @@ function renderWallpapers() {
 
 
 // ============================================================
+// WALLPAPER IMAGE ERROR
+// ============================================================
+
+function handleWallpaperImageError(event) {
+
+    const image =
+        event.target.closest?.(
+            ".wallpaper-image"
+        );
+
+    if (!image) return;
+
+    const container =
+        image.closest(
+            ".wallpaper-image-container"
+        );
+
+    container?.classList.add(
+        "image-error"
+    );
+
+    image.remove();
+
+}
+
+
+// ============================================================
 // CREATE WALLPAPER CARD
 // ============================================================
 
@@ -786,6 +948,7 @@ function createWallpaperCard(
 
 
     const imageURL =
+        wallpaper.imageUrl ||
         wallpaper.imageURL ||
         wallpaper.image ||
         wallpaper.url ||
@@ -820,12 +983,12 @@ function createWallpaperCard(
     return `
 
         <article
-            class="wallpaper-card"
+            class="card wallpaper-card"
             data-id="${id}"
         >
 
             <div
-                class="wallpaper-image-wrapper"
+                class="wallpaper-image-container"
             >
 
                 <img
@@ -834,53 +997,47 @@ function createWallpaperCard(
                     alt="${title}"
                     loading="lazy"
                     decoding="async"
-                    onerror="this.onerror=null;this.src='';"
                 >
-
 
                 <div
-                    class="wallpaper-overlay"
+                    class="image-error-message"
                 >
-
-                    <button
-                        class="favourite-btn ${favouriteClass}"
-                        data-action="favourite"
-                        data-id="${id}"
-                        aria-label="Favourite"
-                        title="Favourite"
-                    >
-                        ${favouriteIcon}
-                    </button>
-
-
-                    <button
-                        class="download-btn"
-                        data-action="download"
-                        data-id="${id}"
-                        aria-label="Download"
-                        title="Download"
-                    >
-                        ↓ Download
-                    </button>
-
+                    Image unavailable
                 </div>
 
             </div>
 
+            <h3>
+                ${title}
+            </h3>
 
-            <div
-                class="wallpaper-info"
-            >
+            <p class="wallpaper-category">
+                ${category}
+            </p>
 
-                <h3>
-                    ${title}
-                </h3>
+            <div class="card-buttons">
 
-                <span
-                    class="wallpaper-category"
+                <button
+                    type="button"
+                    class="favorite-btn favourite-btn ${favouriteClass}"
+                    data-action="favourite"
+                    data-id="${id}"
+                    aria-label="${isFavourite ? "Remove from favourites" : "Add to favourites"}"
+                    title="Favourite"
                 >
-                    ${category}
-                </span>
+                    ${favouriteIcon}
+                </button>
+
+                <button
+                    type="button"
+                    class="download-btn"
+                    data-action="download"
+                    data-id="${id}"
+                    aria-label="Download ${title}"
+                    title="Download"
+                >
+                    ↓ Download
+                </button>
 
             </div>
 
@@ -967,6 +1124,7 @@ async function downloadWallpaper(
 
 
     const imageURL =
+        wallpaper.imageUrl ||
         wallpaper.imageURL ||
         wallpaper.image ||
         wallpaper.url ||
@@ -1006,7 +1164,7 @@ async function downloadWallpaper(
 
 
         link.download =
-            `${filename}.jpg`;
+            `${filename}.${getImageExtension(imageURL)}`;
 
 
         link.target =
@@ -1034,7 +1192,7 @@ async function downloadWallpaper(
 
 
         showToast(
-            "Wallpaper download सुरू झाला.",
+            "Wallpaper download किंवा image open सुरू झाले.",
             "success"
         );
 
@@ -1429,7 +1587,7 @@ async function loadCategories() {
 
         const defaultCategories = [
 
-            "Shivaji Maharaj",
+            "Chhatrapati Shivaji Maharaj",
 
             "Indian Army",
 
@@ -1439,7 +1597,9 @@ async function loadCategories() {
 
             "Festivals",
 
-            "Nature",
+            "Indian Culture",
+
+            "Nature / India",
 
             "Anime",
 
@@ -1475,12 +1635,13 @@ async function loadCategories() {
 
         STATE.categories = [
             "All",
-            "Shivaji Maharaj",
+            "Chhatrapati Shivaji Maharaj",
             "Indian Army",
             "Freedom Fighters",
             "Temples",
             "Festivals",
-            "Nature",
+            "Indian Culture",
+            "Nature / India",
             "Anime",
             "Country"
         ];
@@ -1584,16 +1745,13 @@ function filterByCategory(
             STATE.wallpapers.filter(
                 wallpaper => {
 
-                    const wallpaperCategory =
-                        String(
-                            wallpaper.category ||
-                            ""
-                        ).toLowerCase();
-
-
                     return (
-                        wallpaperCategory ===
-                        category.toLowerCase()
+                        normalizeCategory(
+                            wallpaper.category
+                        ) ===
+                        normalizeCategory(
+                            category
+                        )
                     );
 
                 }
@@ -1657,13 +1815,12 @@ function performSearch(
             results =
                 results.filter(
                     wallpaper =>
-                        String(
-                            wallpaper.category ||
-                            ""
+                        normalizeCategory(
+                            wallpaper.category
+                        ) ===
+                        normalizeCategory(
+                            STATE.currentCategory
                         )
-                            .toLowerCase() ===
-                        STATE.currentCategory
-                            .toLowerCase()
                 );
 
         }
@@ -1927,21 +2084,14 @@ function initializeDarkMode() {
         );
 
 
-    if (savedTheme) {
-
-        STATE.isDarkMode =
-            savedTheme ===
-            "dark";
-
-    } else {
-
-        STATE.isDarkMode =
+    STATE.isDarkMode = savedTheme
+        ? savedTheme === "dark"
+        : !(
             window.matchMedia &&
             window.matchMedia(
-                "(prefers-color-scheme: dark)"
-            ).matches;
-
-    }
+                "(prefers-color-scheme: light)"
+            ).matches
+        );
 
 
     applyDarkMode();
@@ -1959,14 +2109,13 @@ function applyDarkMode() {
 
 
     DOM.body.classList.toggle(
-        "dark-mode",
-        STATE.isDarkMode
+        "light-mode",
+        !STATE.isDarkMode
     );
 
-
     document.documentElement.classList.toggle(
-        "dark-mode",
-        STATE.isDarkMode
+        "light-mode",
+        !STATE.isDarkMode
     );
 
 
@@ -1982,8 +2131,13 @@ function applyDarkMode() {
 
         DOM.darkModeButton.title =
             STATE.isDarkMode
-                ? "Light Mode"
-                : "Dark Mode";
+                ? "Switch to light mode"
+                : "Switch to dark mode";
+
+        DOM.darkModeButton.textContent =
+            STATE.isDarkMode
+                ? "☀️"
+                : "🌙";
 
     }
 
@@ -2035,7 +2189,7 @@ function initializeMobileMenu() {
 
             const isOpen =
                 DOM.mobileMenu.classList.toggle(
-                    "active"
+                    "show"
                 );
 
 
@@ -2049,6 +2203,11 @@ function initializeMobileMenu() {
                 "aria-expanded",
                 String(isOpen)
             );
+
+            DOM.mobileMenuButton.textContent =
+                isOpen
+                    ? "✖"
+                    : "☰";
 
         }
     );
@@ -2068,7 +2227,7 @@ function initializeMobileMenu() {
             ) {
 
                 DOM.mobileMenu.classList.remove(
-                    "active"
+                    "show"
                 );
 
 
@@ -2076,9 +2235,44 @@ function initializeMobileMenu() {
                     "active"
                 );
 
+                DOM.mobileMenuButton.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+
+                DOM.mobileMenuButton.textContent =
+                    "☰";
+
             }
 
         }
+    );
+
+    DOM.mobileMenu.querySelectorAll(
+        "a"
+    ).forEach(
+        link => link.addEventListener(
+            "click",
+            () => {
+
+                DOM.mobileMenu.classList.remove(
+                    "show"
+                );
+
+                DOM.mobileMenuButton.classList.remove(
+                    "active"
+                );
+
+                DOM.mobileMenuButton.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+
+                DOM.mobileMenuButton.textContent =
+                    "☰";
+
+            }
+        )
     );
 
 }
@@ -2210,6 +2404,12 @@ function setupEventListeners() {
         DOM.wallpaperGrid.addEventListener(
             "click",
             handleWallpaperGridClick
+        );
+
+        DOM.wallpaperGrid.addEventListener(
+            "error",
+            handleWallpaperImageError,
+            true
         );
 
     }
@@ -2371,6 +2571,54 @@ function setupEventListeners() {
     }
 
 
+    // Back to top
+    if (DOM.backToTop) {
+
+        const updateBackToTop = () => {
+
+            DOM.backToTop.classList.toggle(
+                "visible",
+                window.scrollY > 300
+            );
+
+        };
+
+        window.addEventListener(
+            "scroll",
+            updateBackToTop,
+            { passive: true }
+        );
+
+        DOM.backToTop.addEventListener(
+            "click",
+            () => window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            })
+        );
+
+        updateBackToTop();
+
+    }
+
+
+    // Footer category links
+    document.querySelectorAll(
+        "[data-footer-category]"
+    ).forEach(
+        link => link.addEventListener(
+            "click",
+            () => {
+
+                filterByCategory(
+                    link.dataset.footerCategory
+                );
+
+            }
+        )
+    );
+
+
     // Escape key
     document.addEventListener(
         "keydown",
@@ -2421,13 +2669,29 @@ function showLoading(
     isLoading
 ) {
 
-    if (!DOM.loading) return;
+    if (DOM.loading) {
 
+        DOM.loading.style.display =
+            isLoading
+                ? "flex"
+                : "none";
 
-    DOM.loading.style.display =
-        isLoading
-            ? "flex"
-            : "none";
+        return;
+    }
+
+    if (
+        isLoading &&
+        DOM.wallpaperGrid
+    ) {
+
+        DOM.wallpaperGrid.innerHTML = `
+            <div class="content-message loading">
+                <h3>Loading wallpapers...</h3>
+                <p>Please wait while wallpapers are loading.</p>
+            </div>
+        `;
+
+    }
 
 }
 
@@ -2444,7 +2708,7 @@ function showNoWallpapers() {
     DOM.wallpaperGrid.innerHTML = `
 
         <div
-            class="no-wallpapers"
+            class="content-message no-wallpapers"
         >
 
             <div class="no-wallpapers-icon">
@@ -2481,7 +2745,7 @@ function showWallpaperError() {
     DOM.wallpaperGrid.innerHTML = `
 
         <div
-            class="wallpaper-error"
+            class="content-message error wallpaper-error"
         >
 
             <h3>
@@ -2738,6 +3002,83 @@ function createFilename(
             80
         ) ||
         "BharatVarshWallpaper";
+
+}
+
+
+// ============================================================
+// IMAGE FILE EXTENSION
+// ============================================================
+
+function getImageExtension(
+    imageURL
+) {
+
+    try {
+
+        const pathname =
+            new URL(
+                imageURL,
+                window.location.href
+            ).pathname;
+
+        const extension =
+            pathname
+                .split(".")
+                .pop()
+                ?.toLowerCase();
+
+        return [
+            "jpg",
+            "jpeg",
+            "png",
+            "webp",
+            "avif"
+        ].includes(extension)
+            ? extension
+            : "jpg";
+
+    } catch {
+
+        return "jpg";
+
+    }
+
+}
+
+
+// ============================================================
+// NORMALIZE CATEGORY
+// ============================================================
+
+function normalizeCategory(
+    value
+) {
+
+    const normalized =
+        String(value || "")
+            .trim()
+            .toLowerCase()
+            .replace(
+                /\s*\/\s*/g,
+                " / "
+            )
+            .replace(
+                /\s+/g,
+                " "
+            );
+
+    const aliases = {
+        "shivaji maharaj":
+            "chhatrapati shivaji maharaj",
+        "nature":
+            "nature / india",
+        "india nature":
+            "nature / india"
+    };
+
+    return aliases[normalized] ||
+        normalized;
 
 }
 

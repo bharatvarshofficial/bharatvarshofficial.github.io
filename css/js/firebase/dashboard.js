@@ -6,23 +6,16 @@
 
 
 // ==========================================
-// FIREBASE IMPORTS
+// FIREBASE SERVICES
 // ==========================================
 
 import {
-    initializeApp
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-
-
-import {
-    getAuth,
     onAuthStateChanged,
     signOut
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+} from "firebase/auth";
 
 
 import {
-    getFirestore,
     collection,
     addDoc,
     getDocs,
@@ -30,7 +23,12 @@ import {
     orderBy,
     limit,
     serverTimestamp
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+} from "firebase/firestore";
+
+import {
+    auth,
+    db
+} from "../../../firebase.js";
 
 
 // ==========================================
@@ -39,54 +37,6 @@ import {
 
 const ADMIN_UID =
     "hGrTepDbtsaCoSQL5D2bBG0iZzD2";
-
-
-// ==========================================
-// FIREBASE CONFIG
-// ==========================================
-
-const firebaseConfig = {
-
-    apiKey:
-        "AIzaSyAWnWt1ye6c_W259Fv1jI_KupRk5wq4kGE",
-
-    authDomain:
-        "bharatvarshofficial-21a59.firebaseapp.com",
-
-    projectId:
-        "bharatvarshofficial-21a59",
-
-    storageBucket:
-        "bharatvarshofficial-21a59.firebasestorage.app",
-
-    messagingSenderId:
-        "182316736380",
-
-    appId:
-        "1:182316736380:web:a934fa35bd53c011b20ef9",
-
-    measurementId:
-        "G-QS2Y0V3CLE"
-};
-
-
-// ==========================================
-// INITIALIZE FIREBASE
-// ==========================================
-
-const app =
-    initializeApp(firebaseConfig);
-
-const auth =
-    getAuth(app);
-
-const db =
-    getFirestore(app);
-
-
-console.log(
-    "✅ Dashboard Firebase Connected"
-);
 
 
 // ==========================================
@@ -176,7 +126,7 @@ onAuthStateChanged(
             );
 
             window.location.replace(
-                "./admin.html"
+                "../../../admin.html"
             );
 
             return;
@@ -209,7 +159,7 @@ onAuthStateChanged(
 
 
             window.location.replace(
-                "./admin.html"
+                "../../../admin.html"
             );
 
 
@@ -257,7 +207,7 @@ logoutBtn.addEventListener(
 
 
             window.location.replace(
-                "./admin.html"
+                "../../../admin.html"
             );
 
 
@@ -511,18 +461,8 @@ mediaForm.addEventListener(
         }
 
 
-        if (!file) {
-
-            showStatus(
-                "Please select a file.",
-                "error"
-            );
-
-            return;
-        }
-
-
         if (
+            file &&
             type === "videos" &&
             !file.type.startsWith("video/")
         ) {
@@ -537,6 +477,7 @@ mediaForm.addEventListener(
 
 
         if (
+            file &&
             type !== "videos" &&
             !file.type.startsWith("image/")
         ) {
@@ -588,9 +529,6 @@ mediaForm.addEventListener(
 
                 createdBy:
                     user.uid,
-
-                createdByEmail:
-                    user.email || "",
 
                 downloads:
                     0,
