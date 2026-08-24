@@ -451,8 +451,14 @@ small {
    PUBLISH BUTTON
 ========================================== */
 
+.form-actions {
+    display: flex;
+
+    gap: 12px;
+}
+
 .publish-btn {
-    width: 100%;
+    flex: 1;
 
     padding: 14px;
 
@@ -481,6 +487,33 @@ small {
     background: #555555;
 
     cursor: not-allowed;
+}
+
+
+.cancel-edit-btn {
+    padding: 14px 20px;
+
+    border:
+        1px solid #8b949e;
+
+    border-radius: 9px;
+
+    background: transparent;
+
+    color: #c9d1d9;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+
+.cancel-edit-btn:hover {
+    border-color: #ffffff;
+
+    color: #ffffff;
 }
 
 
@@ -622,6 +655,54 @@ small {
 }
 
 
+.media-actions {
+    display: flex;
+
+    gap: 8px;
+
+    margin-top: 14px;
+}
+
+
+.media-action {
+    flex: 1;
+
+    padding: 8px 10px;
+
+    border:
+        1px solid #30363d;
+
+    border-radius: 7px;
+
+    background: #21262d;
+
+    color: #ffffff;
+
+    font-size: 12px;
+
+    cursor: pointer;
+}
+
+
+.media-action:hover {
+    border-color: #ff9933;
+}
+
+
+.delete-action:hover {
+    border-color: #da3633;
+
+    color: #ff7b72;
+}
+
+
+.media-action:disabled {
+    cursor: wait;
+
+    opacity: 0.6;
+}
+
+
 /* ==========================================
    EMPTY
 ========================================== */
@@ -701,6 +782,11 @@ small {
         flex-direction: column;
 
         gap: 12px;
+    }
+
+
+    .form-actions {
+        flex-direction: column;
     }
 
 }

@@ -150,7 +150,7 @@
                 <div class="form-group">
 
                     <label for="mediaFile">
-                        Optional Preview File
+                        Upload File
                     </label>
 
                     <input
@@ -159,8 +159,8 @@
                     >
 
                     <small id="fileHelp">
-                        Preview only; this file is not uploaded yet.
-                        Supported images: JPG, PNG, WebP.
+                        Upload to Firebase Storage: JPG, PNG or WebP,
+                        maximum 25 MB.
                     </small>
 
                 </div>
@@ -256,6 +256,10 @@
                             Anime
                         </option>
 
+                        <option value="Country">
+                            Country
+                        </option>
+
                         <option value="Other">
                             Other
                         </option>
@@ -287,19 +291,18 @@
                 <div class="form-group">
 
                     <label for="mediaUrl">
-                        Media URL
+                        Public Media URL (optional fallback)
                     </label>
 
                     <input
                         type="url"
                         id="mediaUrl"
                         placeholder="https://example.com/media.jpg"
-                        required
                     >
 
                     <small>
-                        For now, enter the public Cloudflare R2
-                        media URL manually.
+                        Choose a file above, or enter an existing
+                        public https URL here.
                     </small>
 
                 </div>
@@ -341,13 +344,25 @@
 
                 <!-- Submit -->
 
-                <button
-                    type="submit"
-                    id="publishBtn"
-                    class="publish-btn"
-                >
-                    🚀 Publish Media
-                </button>
+                <div class="form-actions">
+
+                    <button
+                        type="submit"
+                        id="publishBtn"
+                        class="publish-btn"
+                    >
+                        🚀 Publish Media
+                    </button>
+
+                    <button
+                        type="button"
+                        id="cancelEditBtn"
+                        class="cancel-edit-btn hidden"
+                    >
+                        Cancel Edit
+                    </button>
+
+                </div>
 
 
                 <!-- Status -->
