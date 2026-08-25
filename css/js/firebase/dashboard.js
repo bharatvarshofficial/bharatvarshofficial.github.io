@@ -21,12 +21,14 @@ import {
     deleteDoc,
     doc,
     getCountFromServer,
+    getDoc,
     getDocs,
     query,
     orderBy,
     limit,
     serverTimestamp,
-    updateDoc
+    updateDoc,
+    writeBatch
 } from "firebase/firestore";
 
 import {
@@ -163,6 +165,16 @@ const imageCount =
 
 const videoCount =
     document.getElementById("videoCount");
+
+const creatorApplicationCount =
+    document.getElementById(
+        "creatorApplicationCount"
+    );
+
+const creatorApplicationsList =
+    document.getElementById(
+        "creatorApplicationsList"
+    );
 
 
 // ==========================================
@@ -1110,9 +1122,507 @@ async function loadDashboard() {
 
     await loadCounts();
 
+    await loadCreatorApplications();
+
     await loadRecentMedia();
 
 }
+
+
+// ==========================================
+// CREATOR VERIFICATION QUEUE
+// ==========================================
+
+function getApplicationTime(application) {
+
+    return application.submittedAt?.seconds ||
+        application.updatedAt?.seconds ||
+        0;
+
+}
+
+
+function appendApplicationDetail(
+    container,
+    label,
+    value
+) {
+
+    const detail =
+        document.createElement("p");
+
+    const labelElement =
+        document.createElement("strong");
+
+    labelElement.textContent = `${label}: `;
+    detail.append(labelElement, value || "Not provided");
+    container.append(detail);
+
+}
+
+
+function createCreatorApplicationCard(application) {
+
+    const card =
+        document.createElement("article");
+
+    card.className =
+        "creator-application-card";
+
+    card.dataset.applicationUid =
+        application.uid;
+
+
+    const heading =
+        document.createElement("div");
+
+    heading.className =
+        "creator-application-heading";
+
+
+    const identity =
+        document.createElement("div");
+
+    const title =
+        document.createElement("h3");
+
+    title.textContent =
+        application.channelName ||
+        "Unnamed creator";
+
+    const handle =
+        document.createElement("span");
+
+    handle.textContent =
+        `@${application.channelHandle || "unknown"}`;
+
+    identity.append(title, handle);
+
+
+    const badge =
+        document.createElement("span");
+
+    badge.className =
+        "creator-queue-badge";
+
+    badge.textContent =
+        "Pending review";
+
+    heading.append(identity, badge);
+
+
+    const details =
+        document.createElement("div");
+
+    details.className =
+        "creator-application-details";
+
+    appendApplicationDetail(
+        details,
+        "Category",
+        application.category
+    );
+
+    appendApplicationDetail(
+        details,
+        "Description",
+        application.bio
+    );
+
+
+    if (
+        application.website &&
+        isValidPublicURL(application.website)
+    ) {
+
+        const websiteLine =
+            document.createElement("p");
+
+        const websiteLabel =
+            document.createElement("strong");
+
+        const websiteLink =
+            document.createElement("a");
+
+        websiteLabel.textContent =
+            "Website: ";
+
+        websiteLink.href =
+            application.website;
+
+        websiteLink.textContent =
+            application.website;
+
+        websiteLink.target = "_blank";
+        websiteLink.rel = "noopener noreferrer";
+
+        websiteLine.append(
+            websiteLabel,
+            websiteLink
+        );
+
+        details.append(websiteLine);
+
+    }
+
+
+    const declaration =
+        document.createElement("p");
+
+    declaration.className =
+        "creator-rights-status";
+
+    declaration.textContent =
+        application.rightsConfirmed
+            ? "✓ Content-rights declaration confirmed"
+            : "⚠ Content-rights declaration missing";
+
+
+    const actions =
+        document.createElement("div");
+
+    actions.className =
+        "creator-application-actions";
+
+    const approveButton =
+        document.createElement("button");
+
+    approveButton.type = "button";
+    approveButton.className =
+        "creator-review-action approve-creator";
+    approveButton.dataset.creatorAction =
+        "approve";
+    approveButton.textContent =
+        "✓ Approve creator";
+
+
+    const rejectButton =
+        document.createElement("button");
+
+    rejectButton.type = "button";
+    rejectButton.className =
+        "creator-review-action reject-creator";
+    rejectButton.dataset.creatorAction =
+        "reject";
+    rejectButton.textContent =
+        "Request changes";
+
+    actions.append(
+        approveButton,
+        rejectButton
+    );
+
+    card.append(
+        heading,
+        details,
+        declaration,
+        actions
+    );
+
+    return card;
+
+}
+
+
+async function loadCreatorApplications() {
+
+    if (
+        !creatorApplicationsList ||
+        !creatorApplicationCount
+    ) return;
+
+    creatorApplicationsList.innerHTML =
+        '<div class="empty-state">Loading creator applications…</div>';
+
+
+    try {
+
+        const snapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "creatorApplications"
+                )
+            );
+
+        const applications =
+            snapshot.docs
+                .map((applicationDoc) => ({
+                    id: applicationDoc.id,
+                    ...applicationDoc.data()
+                }))
+                .filter(
+                    (application) =>
+                        application.status ===
+                            "pending"
+                )
+                .sort(
+                    (a, b) =>
+                        getApplicationTime(b) -
+                        getApplicationTime(a)
+                );
+
+
+        creatorApplicationCount.textContent =
+            `${applications.length} pending`;
+
+        creatorApplicationCount.classList.toggle(
+            "connection-on",
+            applications.length === 0
+        );
+
+        creatorApplicationCount.classList.toggle(
+            "connection-off",
+            applications.length > 0
+        );
+
+
+        creatorApplicationsList.replaceChildren();
+
+
+        if (!applications.length) {
+
+            const emptyState =
+                document.createElement("div");
+
+            emptyState.className =
+                "empty-state";
+
+            emptyState.textContent =
+                "No creator applications are waiting for review.";
+
+            creatorApplicationsList.append(
+                emptyState
+            );
+
+            return;
+
+        }
+
+
+        applications.forEach(
+            (application) => {
+                creatorApplicationsList.append(
+                    createCreatorApplicationCard(
+                        application
+                    )
+                );
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Creator application load error:",
+            error
+        );
+
+        creatorApplicationCount.textContent =
+            "Unavailable";
+
+        creatorApplicationsList.innerHTML =
+            '<div class="empty-state">Creator applications could not be loaded. Deploy the latest Firestore rules and refresh.</div>';
+
+    }
+
+}
+
+
+async function reviewCreatorApplication(
+    uid,
+    action,
+    button
+) {
+
+    const applicationReference =
+        doc(
+            db,
+            "creatorApplications",
+            uid
+        );
+
+    const isApproval =
+        action === "approve";
+
+    let reviewNote = "";
+
+
+    if (isApproval) {
+
+        const confirmed = window.confirm(
+            "Approve this creator channel? Creator Studio access will become eligible."
+        );
+
+        if (!confirmed) return;
+
+    } else {
+
+        reviewNote = window.prompt(
+            "Tell the creator what must be changed:",
+            "Please update your channel information and resubmit."
+        )?.trim() || "";
+
+        if (!reviewNote) return;
+
+    }
+
+
+    button.disabled = true;
+    button.textContent =
+        isApproval
+            ? "Approving…"
+            : "Saving…";
+
+
+    try {
+
+        const applicationDocument =
+            await getDoc(
+                applicationReference
+            );
+
+
+        if (!applicationDocument.exists()) {
+            throw new Error(
+                "Creator application no longer exists."
+            );
+        }
+
+
+        const application =
+            applicationDocument.data();
+
+        if (application.status !== "pending") {
+            throw new Error(
+                "This application has already been reviewed."
+            );
+        }
+
+
+        const status =
+            isApproval
+                ? "approved"
+                : "rejected";
+
+        const reviewBatch =
+            writeBatch(db);
+
+        reviewBatch.update(
+            applicationReference,
+            {
+                status,
+                reviewNote,
+                reviewedAt:
+                    serverTimestamp(),
+                reviewedBy:
+                    ADMIN_UID,
+                updatedAt:
+                    serverTimestamp()
+            }
+        );
+
+
+        reviewBatch.set(
+            doc(db, "users", uid),
+            {
+                creatorStatus: status,
+                updatedAt:
+                    serverTimestamp()
+            },
+            { merge: true }
+        );
+
+
+        if (isApproval) {
+
+            reviewBatch.set(
+                doc(db, "creators", uid),
+                {
+                    uid,
+                    channelName:
+                        application.channelName,
+                    channelHandle:
+                        application.channelHandle,
+                    category:
+                        application.category,
+                    website:
+                        application.website || "",
+                    bio:
+                        application.bio,
+                    status:
+                        "approved",
+                    followers: 0,
+                    uploads: 0,
+                    approvedAt:
+                        serverTimestamp(),
+                    updatedAt:
+                        serverTimestamp()
+                },
+                { merge: true }
+            );
+
+        }
+
+
+        await reviewBatch.commit();
+
+
+        showStatus(
+            isApproval
+                ? "✅ Creator approved. Public creator record created."
+                : "✅ Changes requested. The creator can edit and resubmit.",
+            "success"
+        );
+
+        await loadCreatorApplications();
+
+    } catch (error) {
+
+        console.error(
+            "Creator review error:",
+            error
+        );
+
+        showStatus(
+            `❌ ${error.message}`,
+            "error"
+        );
+
+        button.disabled = false;
+        button.textContent =
+            isApproval
+                ? "✓ Approve creator"
+                : "Request changes";
+
+    }
+
+}
+
+
+creatorApplicationsList?.addEventListener(
+    "click",
+    (event) => {
+
+        const button =
+            event.target.closest(
+                "[data-creator-action]"
+            );
+
+        const card =
+            button?.closest(
+                "[data-application-uid]"
+            );
+
+        if (!button || !card) return;
+
+        reviewCreatorApplication(
+            card.dataset.applicationUid,
+            button.dataset.creatorAction,
+            button
+        );
+
+    }
+);
 
 
 // ==========================================

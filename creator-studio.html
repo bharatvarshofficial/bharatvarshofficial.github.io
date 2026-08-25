@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#090b10">
+
+    <title>BharatVarshOfficial | Creator Studio</title>
+
+    <link rel="icon" href="assets/logo.png">
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="creator-studio.css">
+</head>
+
+<body>
+    <header class="studio-topbar">
+        <a href="./index.html" class="studio-brand">
+            <img src="assets/logo.png" alt="">
+            <span>BharatVarshOfficial</span>
+            <small>Creator Studio</small>
+        </a>
+
+        <nav aria-label="Creator Studio navigation">
+            <a href="./index.html">Home</a>
+            <a href="./profile.html#creator">My channel</a>
+            <button type="button" id="studioSignOut" hidden>
+                Sign out
+            </button>
+        </nav>
+    </header>
+
+    <main class="studio-page">
+        <section id="studioLoading" class="studio-state">
+            Checking creator access…
+        </section>
+
+        <section id="studioSignedOut" class="studio-state" hidden>
+            <span class="state-icon">🔐</span>
+            <h1>Sign in to open Creator Studio</h1>
+            <p>Use the Google account connected to your creator channel.</p>
+            <a href="./index.html#login">Continue to sign in</a>
+        </section>
+
+        <section id="studioLocked" class="studio-state" hidden>
+            <span class="state-icon">⏳</span>
+            <h1>Creator approval is required</h1>
+            <p>
+                Create your channel and submit its verification application.
+                Creator Studio opens only after admin approval.
+            </p>
+            <a href="./profile.html#creator">Open creator application</a>
+        </section>
+
+        <div id="studioContent" hidden>
+            <section class="studio-hero">
+                <div>
+                    <span class="eyebrow">APPROVED CREATOR</span>
+                    <h1 id="studioChannelName">Creator Studio</h1>
+                    <p id="studioChannelHandle">@creator</p>
+                </div>
+                <span class="approval-badge">✓ Verified access</span>
+            </section>
+
+            <section class="studio-metrics" aria-label="Channel summary">
+                <article>
+                    <span>🖼️</span>
+                    <strong id="studioUploadCount">0</strong>
+                    <p>Uploads</p>
+                </article>
+                <article>
+                    <span>👥</span>
+                    <strong id="studioFollowerCount">0</strong>
+                    <p>Followers</p>
+                </article>
+                <article>
+                    <span>✅</span>
+                    <strong>Approved</strong>
+                    <p>Channel status</p>
+                </article>
+            </section>
+
+            <section class="upload-boundary">
+                <div class="upload-boundary-icon">🛡️</div>
+                <div>
+                    <span class="eyebrow">SECURE UPLOAD GATEWAY</span>
+                    <h2>Photos, wallpapers and videos</h2>
+                    <p>
+                        Your account is eligible for creator uploads. File
+                        publishing will be activated after the signed upload
+                        service is connected; the Cloudinary API secret is
+                        never stored in browser code.
+                    </p>
+                    <div class="media-types" aria-label="Supported media">
+                        <span>📷 Photos</span>
+                        <span>🖼️ Wallpapers</span>
+                        <span>🎬 Videos</span>
+                    </div>
+                </div>
+                <button type="button" disabled>
+                    Secure upload activation pending
+                </button>
+            </section>
+
+            <section class="review-flow">
+                <h2>How creator publishing will work</h2>
+                <ol>
+                    <li><strong>Upload</strong><span>Select your original file.</span></li>
+                    <li><strong>Review</strong><span>Admin checks safety and ownership.</span></li>
+                    <li><strong>Publish</strong><span>Approved media appears publicly.</span></li>
+                </ol>
+            </section>
+        </div>
+    </main>
+
+    <script type="module" src="creator-studio.js"></script>
+</body>
+
+</html>

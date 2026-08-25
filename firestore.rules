@@ -23,8 +23,118 @@ service cloud.firestore {
       allow create: if isOwner(userId)
         && request.resource.data.uid == userId;
 
-      allow update: if isOwner(userId);
+      allow update: if isAdmin()
+        || (
+          isOwner(userId)
+          && (
+            !request.resource.data
+              .diff(resource.data)
+              .affectedKeys()
+              .hasAny(['creatorStatus'])
+            || request.resource.data.get(
+              'creatorStatus',
+              'not-created'
+            ) in ['draft', 'pending']
+          )
+        );
       allow delete: if isAdmin();
+    }
+
+    match /creatorApplications/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.status == 'pending'
+        && request.resource.data.rightsConfirmed == true
+        && request.resource.data.keys().hasOnly([
+          'uid',
+          'channelName',
+          'channelHandle',
+          'category',
+          'website',
+          'bio',
+          'rightsConfirmed',
+          'status',
+          'submittedAt',
+          'updatedAt'
+        ])
+        && request.resource.data.channelName is string
+        && request.resource.data.channelName.size() >= 3
+        && request.resource.data.channelName.size() <= 60
+        && request.resource.data.channelHandle is string
+        && request.resource.data.channelHandle.size() >= 3
+        && request.resource.data.channelHandle.size() <= 40
+        && request.resource.data.bio is string
+        && request.resource.data.bio.size() >= 20
+        && request.resource.data.bio.size() <= 500
+        && request.resource.data.category is string
+        && request.resource.data.category in [
+          'Wallpapers',
+          'Photography',
+          'Wedding & Events',
+          'Art & Design',
+          'Indian Culture',
+          'Nature',
+          'Other'
+        ]
+        && request.resource.data.website is string
+        && request.resource.data.website.size() <= 200
+        && request.resource.data.submittedAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isAdmin()
+        || (
+          isOwner(userId)
+          && resource.data.status == 'rejected'
+          && request.resource.data
+            .diff(resource.data)
+            .affectedKeys()
+            .hasOnly([
+              'channelName',
+              'category',
+              'website',
+              'bio',
+              'rightsConfirmed',
+              'status',
+              'submittedAt',
+              'updatedAt'
+            ])
+          && request.resource.data.uid == userId
+          && request.resource.data.status == 'pending'
+          && request.resource.data.rightsConfirmed == true
+          && request.resource.data.channelName is string
+          && request.resource.data.channelName.size() >= 3
+          && request.resource.data.channelName.size() <= 60
+          && request.resource.data.channelHandle is string
+          && request.resource.data.channelHandle
+            == resource.data.channelHandle
+          && request.resource.data.bio is string
+          && request.resource.data.bio.size() >= 20
+          && request.resource.data.bio.size() <= 500
+          && request.resource.data.category is string
+          && request.resource.data.category in [
+            'Wallpapers',
+            'Photography',
+            'Wedding & Events',
+            'Art & Design',
+            'Indian Culture',
+            'Nature',
+            'Other'
+          ]
+          && request.resource.data.website is string
+          && request.resource.data.website.size() <= 200
+          && request.resource.data.submittedAt == request.time
+          && request.resource.data.updatedAt == request.time
+        );
+
+      allow delete: if isAdmin()
+        || (isOwner(userId) && resource.data.status != 'approved');
+    }
+
+    match /creators/{creatorId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     match /categories/{categoryId} {

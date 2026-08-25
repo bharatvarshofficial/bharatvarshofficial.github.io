@@ -261,6 +261,113 @@
                         Create channel draft
                     </button>
                 </div>
+
+                <form
+                    id="creatorApplicationForm"
+                    class="creator-application-form"
+                    hidden
+                >
+                    <div class="panel-heading">
+                        <div>
+                            <span class="eyebrow">CREATOR ONBOARDING</span>
+                            <h2>Complete your channel application</h2>
+                            <p>
+                                Only your approved channel information becomes
+                                public. Your email remains private.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="creator-form-grid">
+                        <label>
+                            Channel name
+                            <input
+                                type="text"
+                                id="creatorChannelName"
+                                maxlength="60"
+                                required
+                            >
+                        </label>
+
+                        <label>
+                            Channel handle
+                            <input
+                                type="text"
+                                id="creatorChannelHandle"
+                                readonly
+                                required
+                            >
+                        </label>
+
+                        <label>
+                            Primary category
+                            <select
+                                id="creatorCategory"
+                                required
+                            >
+                                <option value="">Select category</option>
+                                <option value="Wallpapers">Wallpapers</option>
+                                <option value="Photography">Photography</option>
+                                <option value="Wedding & Events">Wedding & Events</option>
+                                <option value="Art & Design">Art & Design</option>
+                                <option value="Indian Culture">Indian Culture</option>
+                                <option value="Nature">Nature</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            Website (optional)
+                            <input
+                                type="url"
+                                id="creatorWebsite"
+                                placeholder="https://example.com"
+                            >
+                        </label>
+
+                        <label class="creator-form-wide">
+                            Channel description
+                            <textarea
+                                id="creatorBio"
+                                rows="5"
+                                maxlength="500"
+                                required
+                            ></textarea>
+                        </label>
+                    </div>
+
+                    <label class="creator-rights-confirmation">
+                        <input
+                            type="checkbox"
+                            id="creatorRightsConfirmation"
+                            required
+                        >
+                        <span>
+                            I will upload only content I created or have legal
+                            permission to publish.
+                        </span>
+                    </label>
+
+                    <button
+                        type="submit"
+                        id="submitCreatorApplication"
+                    >
+                        Submit for admin verification
+                    </button>
+                </form>
+
+                <div
+                    id="creatorApplicationStatus"
+                    class="creator-application-status"
+                    hidden
+                >
+                    <span
+                        id="creatorApplicationBadge"
+                        class="creator-status"
+                    ></span>
+                    <h2 id="creatorApplicationHeading"></h2>
+                    <p id="creatorApplicationMessage"></p>
+                </div>
             </section>
         </div>
     </main>

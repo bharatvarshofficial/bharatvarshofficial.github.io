@@ -48,11 +48,43 @@ const elements = {
     creatorButton: document.getElementById(
         "createCreatorChannel"
     ),
+    creatorApplicationForm: document.getElementById(
+        "creatorApplicationForm"
+    ),
+    creatorChannelName: document.getElementById(
+        "creatorChannelName"
+    ),
+    creatorChannelHandle: document.getElementById(
+        "creatorChannelHandle"
+    ),
+    creatorCategory: document.getElementById(
+        "creatorCategory"
+    ),
+    creatorWebsite: document.getElementById(
+        "creatorWebsite"
+    ),
+    creatorBio: document.getElementById("creatorBio"),
+    creatorApplicationStatus: document.getElementById(
+        "creatorApplicationStatus"
+    ),
+    creatorApplicationBadge: document.getElementById(
+        "creatorApplicationBadge"
+    ),
+    creatorApplicationHeading: document.getElementById(
+        "creatorApplicationHeading"
+    ),
+    creatorApplicationMessage: document.getElementById(
+        "creatorApplicationMessage"
+    ),
+    submitCreatorApplication: document.getElementById(
+        "submitCreatorApplication"
+    ),
     toast: document.getElementById("profileToast")
 };
 
 let currentUser = null;
 let currentProfile = {};
+let currentApplication = null;
 let toastTimer = null;
 
 function getInitial(user) {
@@ -149,31 +181,109 @@ function setActiveTab(tabName) {
         });
 }
 
-function renderCreatorState(profile) {
-    const isDraft =
-        profile.creatorStatus === "draft";
+function renderCreatorState(profile, application = null) {
+    const status =
+        application?.status ||
+        profile.creatorStatus ||
+        "not-created";
+
+    const hasDraft =
+        status !== "not-created";
+
+    const labels = {
+        draft: "Draft",
+        pending: "Pending review",
+        approved: "Approved",
+        rejected: "Changes required"
+    };
 
     elements.creatorMetric.textContent =
-        isDraft ? "Draft" : "Not created";
+        labels[status] || "Not created";
 
     elements.creatorBadge.textContent =
-        isDraft ? "Private draft" : "Not created";
+        status === "draft"
+            ? "Private draft"
+            : (labels[status] || "Not created");
 
     elements.creatorHeading.textContent =
-        isDraft
-            ? profile.channelName || "Creator channel draft"
+        hasDraft
+            ? application?.channelName ||
+                profile.channelName ||
+                "Creator channel draft"
             : "Create your BharatVarsh creator channel";
 
     elements.creatorDescription.textContent =
-        isDraft
-            ? `@${profile.channelHandle || profile.username} is reserved in your private account. Public verification and uploads come next.`
-            : "Reserve a private channel draft now. Public uploads, followers and verification will be enabled in the next creator milestone.";
+        hasDraft
+            ? `@${application?.channelHandle || profile.channelHandle || profile.username} is linked to your private account.`
+            : "Reserve a private channel draft now. Public uploads, followers and verification will be enabled after approval.";
+
+    const buttonLabels = {
+        draft: "Complete application below",
+        pending: "Awaiting admin review",
+        approved: "Open Creator Studio",
+        rejected: "Update application below"
+    };
 
     elements.creatorButton.textContent =
-        isDraft ? "Channel draft created" : "Create channel draft";
+        buttonLabels[status] ||
+        "Create channel draft";
 
     elements.creatorButton.disabled =
-        isDraft;
+        hasDraft && status !== "approved";
+
+    const showApplicationForm =
+        status === "draft" ||
+        status === "rejected";
+
+    elements.creatorApplicationForm.hidden =
+        !showApplicationForm;
+
+    elements.creatorApplicationStatus.hidden =
+        !["pending", "approved", "rejected"].includes(status);
+
+    if (showApplicationForm) {
+        elements.creatorChannelName.value =
+            application?.channelName ||
+            profile.channelName || "";
+        elements.creatorChannelHandle.value =
+            application?.channelHandle ||
+            profile.channelHandle ||
+            profile.username || "";
+        elements.creatorCategory.value =
+            application?.category || "";
+        elements.creatorWebsite.value =
+            application?.website || "";
+        elements.creatorBio.value =
+            application?.bio || "";
+    }
+
+    if (status === "pending") {
+        elements.creatorApplicationBadge.textContent =
+            "Pending review";
+        elements.creatorApplicationHeading.textContent =
+            "Your creator application is with the admin";
+        elements.creatorApplicationMessage.textContent =
+            "Uploads will unlock after the channel information and ownership declaration are approved.";
+    }
+
+    if (status === "approved") {
+        elements.creatorApplicationBadge.textContent =
+            "Approved creator";
+        elements.creatorApplicationHeading.textContent =
+            "Your creator channel is approved";
+        elements.creatorApplicationMessage.textContent =
+            "Creator Studio and secure uploads are the next activation step.";
+    }
+
+    if (status === "rejected") {
+        elements.creatorApplicationBadge.textContent =
+            "Changes required";
+        elements.creatorApplicationHeading.textContent =
+            "Update your creator application";
+        elements.creatorApplicationMessage.textContent =
+            application?.reviewNote ||
+            "Review your channel information below and submit it again.";
+    }
 }
 
 function createFavouriteCard(media) {
@@ -272,6 +382,28 @@ async function loadProfile(user) {
 
     currentProfile = snapshot.data() || {};
 
+    try {
+        const applicationSnapshot =
+            await getDoc(
+                doc(
+                    db,
+                    "creatorApplications",
+                    user.uid
+                )
+            );
+
+        currentApplication =
+            applicationSnapshot.exists()
+                ? applicationSnapshot.data()
+                : null;
+    } catch (error) {
+        console.warn(
+            "Creator application is not available yet:",
+            error
+        );
+        currentApplication = null;
+    }
+
     const username =
         makeHandle(user, currentProfile);
 
@@ -309,7 +441,10 @@ async function loadProfile(user) {
         String(Number(currentProfile.downloads) || 0);
 
     setProfileAvatar(user);
-    renderCreatorState(currentProfile);
+    renderCreatorState(
+        currentProfile,
+        currentApplication
+    );
     await loadFavourites(favouriteIds);
 }
 
@@ -360,6 +495,106 @@ async function createCreatorDraft() {
     }
 }
 
+async function submitCreatorApplication(event) {
+    event.preventDefault();
+
+    if (!currentUser) return;
+
+    const channelName =
+        elements.creatorChannelName.value.trim();
+    const channelHandle =
+        elements.creatorChannelHandle.value.trim();
+    const category =
+        elements.creatorCategory.value;
+    const website =
+        elements.creatorWebsite.value.trim();
+    const bio =
+        elements.creatorBio.value.trim();
+
+    if (
+        !channelName ||
+        !channelHandle ||
+        !category ||
+        bio.length < 20
+    ) {
+        showToast(
+            "Complete every required field and write at least 20 characters in the description."
+        );
+        return;
+    }
+
+    const application = {
+        uid: currentUser.uid,
+        channelName,
+        channelHandle,
+        category,
+        website,
+        bio,
+        rightsConfirmed: true,
+        status: "pending",
+        submittedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+
+    elements.submitCreatorApplication.disabled = true;
+    elements.submitCreatorApplication.textContent =
+        "Submitting…";
+
+    try {
+        await setDoc(
+            doc(
+                db,
+                "creatorApplications",
+                currentUser.uid
+            ),
+            application,
+            { merge: true }
+        );
+
+        await setDoc(
+            doc(db, "users", currentUser.uid),
+            {
+                creatorStatus: "pending",
+                channelName,
+                channelHandle,
+                updatedAt: serverTimestamp()
+            },
+            { merge: true }
+        );
+
+        currentApplication = {
+            ...application,
+            submittedAt: new Date(),
+            updatedAt: new Date()
+        };
+
+        currentProfile = {
+            ...currentProfile,
+            creatorStatus: "pending",
+            channelName,
+            channelHandle
+        };
+
+        renderCreatorState(
+            currentProfile,
+            currentApplication
+        );
+
+        showToast(
+            "Creator application submitted for admin verification."
+        );
+    } catch (error) {
+        console.error("Creator application error:", error);
+        showToast(
+            "Creator application could not be submitted. Deploy the new Firestore rules and try again."
+        );
+    } finally {
+        elements.submitCreatorApplication.disabled = false;
+        elements.submitCreatorApplication.textContent =
+            "Submit for admin verification";
+    }
+}
+
 document.querySelectorAll("[data-profile-tab]")
     .forEach((button) => {
         button.addEventListener("click", () => {
@@ -379,8 +614,32 @@ window.addEventListener("hashchange", () => {
 
 elements.creatorButton.addEventListener(
     "click",
-    createCreatorDraft
+    () => {
+        const status =
+            currentApplication?.status ||
+            currentProfile.creatorStatus;
+
+        if (status === "approved") {
+            window.location.assign(
+                "./creator-studio.html"
+            );
+            return;
+        }
+
+        createCreatorDraft();
+    }
 );
+
+elements.creatorApplicationForm.addEventListener(
+    "submit",
+    submitCreatorApplication
+);
+
+elements.avatar.addEventListener("error", () => {
+    elements.avatar.hidden = true;
+    elements.initial.textContent = getInitial(currentUser);
+    elements.initial.hidden = false;
+});
 
 elements.signOut.addEventListener("click", async () => {
     await signOut(auth);
