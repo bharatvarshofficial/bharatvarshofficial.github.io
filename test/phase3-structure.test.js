@@ -56,24 +56,63 @@ test("public policy and search discovery files are included", async () => {
     );
 });
 
-test("direct Firebase Storage selection stays disabled until Cloudinary", async () => {
-    const [dashboardHtml, dashboardScript] = await Promise.all([
+test("admin dashboard uses configurable Cloudinary direct upload", async () => {
+    const [dashboardHtml, dashboardScript, uploader] = await Promise.all([
         readProjectFile("css/js/firebase/dashboard.html"),
-        readProjectFile("css/js/firebase/dashboard.js")
+        readProjectFile("css/js/firebase/dashboard.js"),
+        readProjectFile("cloudinary-uploader.js")
     ]);
 
-    assert.match(
+    [
+        "cloudinaryCloudName",
+        "cloudinaryUploadPreset",
+        "cloudinarySaveBtn",
+        "mediaFile"
+    ].forEach((id) => {
+        assert.match(
+            dashboardHtml,
+            new RegExp(`id=["']${id}["']`)
+        );
+    });
+
+    assert.doesNotMatch(
         dashboardHtml,
         /id=["']mediaFile["'][^>]*disabled/s
     );
 
     assert.match(
         dashboardScript,
-        /const DIRECT_FILE_UPLOAD_ENABLED = false;/
+        /uploadToCloudinary/
+    );
+
+    assert.match(
+        uploader,
+        /api\.cloudinary\.com\/v1_1/
+    );
+
+    assert.match(
+        uploader,
+        /upload_preset/
+    );
+});
+
+test("admin dashboard keeps legacy media visible and edits legacy URLs safely", async () => {
+    const dashboardScript = await readProjectFile(
+        "css/js/firebase/dashboard.js"
     );
 
     assert.match(
         dashboardScript,
-        /Use a public media URL/
+        /getCountFromServer/
+    );
+
+    assert.match(
+        dashboardScript,
+        /orderedSnapshot\.size\s*</
+    );
+
+    assert.match(
+        dashboardScript,
+        /isValidPublicURL\(existingURL\)/
     );
 });

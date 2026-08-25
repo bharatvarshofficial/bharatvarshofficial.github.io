@@ -20,19 +20,20 @@ import {
     addDoc,
     deleteDoc,
     doc,
+    getCountFromServer,
+    getDoc,
     getDocs,
     query,
     orderBy,
     limit,
     serverTimestamp,
-    updateDoc
+    updateDoc,
+    writeBatch
 } from "firebase/firestore";
 
 import {
     deleteObject,
-    getDownloadURL,
-    ref as storageRef,
-    uploadBytes
+    ref as storageRef
 } from "firebase/storage";
 
 import {
@@ -46,6 +47,14 @@ import {
     canonicalizeCategory,
     getCategoryKey
 } from "../../../categories.js";
+
+import {
+    isCloudinaryConfigured,
+    loadCloudinaryConfig,
+    saveCloudinaryConfig,
+    uploadToCloudinary,
+    validateCloudinaryFile
+} from "../../../cloudinary-uploader.js";
 
 
 // ==========================================
@@ -62,22 +71,17 @@ const ALLOWED_COLLECTIONS =
         "videos"
     ]);
 
-const MAX_IMAGE_SIZE =
-    25 * 1024 * 1024;
-
-const MAX_VIDEO_SIZE =
-    250 * 1024 * 1024;
-
-// Firebase Storage requires billing for this project.
-// Keep direct file selection disabled until Cloudinary is connected.
-const DIRECT_FILE_UPLOAD_ENABLED = false;
-
 const recentMediaByKey =
     new Map();
+
+let cloudinaryConfig =
+    loadCloudinaryConfig();
 
 let editingMedia = null;
 
 let previewObjectURL = null;
+
+let statusMessageTimeout = null;
 
 
 // ==========================================
@@ -101,6 +105,18 @@ const mediaFile =
 
 const fileHelp =
     document.getElementById("fileHelp");
+
+const cloudinaryCloudName =
+    document.getElementById("cloudinaryCloudName");
+
+const cloudinaryUploadPreset =
+    document.getElementById("cloudinaryUploadPreset");
+
+const cloudinarySaveBtn =
+    document.getElementById("cloudinarySaveBtn");
+
+const cloudinaryStatus =
+    document.getElementById("cloudinaryStatus");
 
 const mediaTitle =
     document.getElementById("mediaTitle");
@@ -150,6 +166,16 @@ const imageCount =
 const videoCount =
     document.getElementById("videoCount");
 
+const creatorApplicationCount =
+    document.getElementById(
+        "creatorApplicationCount"
+    );
+
+const creatorApplicationsList =
+    document.getElementById(
+        "creatorApplicationsList"
+    );
+
 
 // ==========================================
 // CANONICAL CATEGORY OPTIONS
@@ -183,6 +209,68 @@ function populateCategoryOptions() {
     }
 
 }
+
+
+// ==========================================
+// CLOUDINARY CONNECTION
+// ==========================================
+
+function renderCloudinaryConnection() {
+    const connected =
+        isCloudinaryConfigured(
+            cloudinaryConfig
+        );
+
+    cloudinaryCloudName.value =
+        cloudinaryConfig.cloudName;
+
+    cloudinaryUploadPreset.value =
+        cloudinaryConfig.uploadPreset;
+
+    cloudinaryStatus.textContent =
+        connected
+            ? "Connected"
+            : "Not connected";
+
+    cloudinaryStatus.classList.toggle(
+        "connection-on",
+        connected
+    );
+
+    cloudinaryStatus.classList.toggle(
+        "connection-off",
+        !connected
+    );
+}
+
+
+cloudinarySaveBtn?.addEventListener(
+    "click",
+    () => {
+        try {
+            cloudinaryConfig =
+                saveCloudinaryConfig({
+                    cloudName:
+                        cloudinaryCloudName.value,
+                    uploadPreset:
+                        cloudinaryUploadPreset.value
+                });
+
+            renderCloudinaryConnection();
+            updateFileSettings();
+
+            showStatus(
+                "✅ Cloudinary connection saved. Direct upload is ready.",
+                "success"
+            );
+        } catch (error) {
+            showStatus(
+                "❌ " + error.message,
+                "error"
+            );
+        }
+    }
+);
 
 
 // ==========================================
@@ -329,6 +417,11 @@ function updateFileSettings() {
     const type =
         mediaType.value;
 
+    const directUploadReady =
+        isCloudinaryConfigured(
+            cloudinaryConfig
+        );
+
 
     mediaFile.value =
         "";
@@ -350,15 +443,15 @@ function updateFileSettings() {
 
 
     mediaFile.disabled =
-        !DIRECT_FILE_UPLOAD_ENABLED;
+        !directUploadReady;
 
 
-    if (!DIRECT_FILE_UPLOAD_ENABLED) {
+    if (!directUploadReady) {
 
         mediaFile.accept = "";
 
         fileHelp.textContent =
-            "Direct file upload is paused until Cloudinary is connected. Paste a public HTTPS media URL below.";
+            "Save your Cloudinary cloud name and unsigned upload preset above to enable direct upload. You can still paste a public HTTPS media URL below.";
 
         return;
 
@@ -371,7 +464,7 @@ function updateFileSettings() {
             "video/mp4,video/webm,video/ogg";
 
         fileHelp.textContent =
-            "Upload to Firebase Storage: MP4, WebM or OGG, maximum 250 MB.";
+            "Upload to Cloudinary: MP4, WebM or OGG, maximum 100 MB.";
 
     } else {
 
@@ -379,7 +472,7 @@ function updateFileSettings() {
             "image/jpeg,image/png,image/webp";
 
         fileHelp.textContent =
-            "Upload to Firebase Storage: JPG, PNG or WebP, maximum 25 MB.";
+            "Upload to Cloudinary: JPG, PNG or WebP, maximum 25 MB.";
 
     }
 
@@ -508,125 +601,41 @@ function validateMediaFile(file, type) {
     if (!file) return "";
 
 
-    if (!DIRECT_FILE_UPLOAD_ENABLED) {
-
-        return "Direct upload is not active. Use a public media URL.";
-
-    }
-
-
-    const isVideo =
-        type === "videos";
-
-
     if (
-        isVideo &&
-        !file.type.startsWith("video/")
+        !isCloudinaryConfigured(
+            cloudinaryConfig
+        )
     ) {
 
-        return "Please select a valid video file.";
+        return "Connect Cloudinary above or use a public media URL.";
 
     }
 
 
-    if (
-        !isVideo &&
-        !file.type.startsWith("image/")
-    ) {
-
-        return "Please select a valid image file.";
-
-    }
-
-
-    const maximumSize =
-        isVideo
-            ? MAX_VIDEO_SIZE
-            : MAX_IMAGE_SIZE;
-
-
-    if (file.size > maximumSize) {
-
-        return isVideo
-            ? "Video must be 250 MB or smaller."
-            : "Image must be 25 MB or smaller.";
-
-    }
-
-
-    return "";
-
-}
-
-
-function sanitizeStorageFilename(filename) {
-
-    const extension =
-        String(filename || "")
-            .split(".")
-            .pop()
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "") ||
-        "bin";
-
-    const basename =
-        String(filename || "media")
-            .replace(/\.[^.]+$/, "")
-            .normalize("NFKC")
-            .replace(/[^a-zA-Z0-9\u0900-\u097f_-]+/g, "-")
-            .replace(/-+/g, "-")
-            .replace(/^-+|-+$/g, "")
-            .slice(0, 80) ||
-        "media";
-
-    return `${basename}.${extension}`;
+    return validateCloudinaryFile(
+        file,
+        type
+    );
 
 }
 
 
 async function uploadMediaFile(
     file,
-    type,
-    user,
-    categoryKey
+    type
 ) {
-
-    const storagePath = [
-        "media",
-        type,
-        user.uid,
-        `${Date.now()}-${sanitizeStorageFilename(file.name)}`
-    ].join("/");
-
-
-    const fileReference =
-        storageRef(
-            storage,
-            storagePath
-        );
-
-
-    await uploadBytes(
-        fileReference,
+    return uploadToCloudinary({
         file,
-        {
-            contentType:
-                file.type,
-
-            customMetadata: {
-                categoryKey
-            }
+        mediaType: type,
+        config: cloudinaryConfig,
+        onProgress: (progress) => {
+            showStatus(
+                `Uploading to Cloudinary... ${progress}%`,
+                "success",
+                0
+            );
         }
-    );
-
-
-    return {
-        storagePath,
-        url:
-            await getDownloadURL(
-                fileReference
-            )
-    };
+    });
 
 }
 
@@ -828,7 +837,7 @@ mediaForm.addEventListener(
         }
 
 
-        let newlyUploadedStoragePath =
+        let uploadedCloudinaryPublicId =
             "";
 
 
@@ -851,27 +860,47 @@ mediaForm.addEventListener(
                 editingMedia?.storagePath ||
                 "";
 
+            let cloudinaryDetails = {
+                assetId:
+                    editingMedia?.cloudinaryAssetId || "",
+                publicId:
+                    editingMedia?.cloudinaryPublicId || "",
+                resourceType:
+                    editingMedia?.cloudinaryResourceType || "",
+                format:
+                    editingMedia?.mediaFormat || "",
+                bytes:
+                    Number(editingMedia?.fileSize) || 0,
+                width:
+                    Number(editingMedia?.width) || 0,
+                height:
+                    Number(editingMedia?.height) || 0,
+                duration:
+                    Number(editingMedia?.duration) || 0
+            };
+
             let mediaSource =
                 editingMedia?.source ||
-                (finalStoragePath
-                    ? "firebase-storage"
-                    : "external-url");
+                (cloudinaryDetails.publicId
+                    ? "cloudinary"
+                    : (finalStoragePath
+                        ? "firebase-storage"
+                        : "external-url"));
 
 
             if (file) {
 
                 showStatus(
-                    "Uploading media to Firebase Storage...",
-                    "success"
+                    "Uploading media to Cloudinary... 0%",
+                    "success",
+                    0
                 );
 
 
                 const uploadResult =
                     await uploadMediaFile(
                         file,
-                        type,
-                        user,
-                        categoryKey
+                        type
                     );
 
 
@@ -879,13 +908,16 @@ mediaForm.addEventListener(
                     uploadResult.url;
 
                 finalStoragePath =
-                    uploadResult.storagePath;
+                    "";
 
-                newlyUploadedStoragePath =
-                    uploadResult.storagePath;
+                cloudinaryDetails =
+                    uploadResult;
+
+                uploadedCloudinaryPublicId =
+                    uploadResult.publicId;
 
                 mediaSource =
-                    "firebase-storage";
+                    "cloudinary";
 
             } else if (
                 enteredURL &&
@@ -894,6 +926,17 @@ mediaForm.addEventListener(
 
                 finalStoragePath =
                     "";
+
+                cloudinaryDetails = {
+                    assetId: "",
+                    publicId: "",
+                    resourceType: "",
+                    format: "",
+                    bytes: 0,
+                    width: 0,
+                    height: 0,
+                    duration: 0
+                };
 
                 mediaSource =
                     "external-url";
@@ -912,6 +955,22 @@ mediaForm.addEventListener(
                     featured.checked,
                 storagePath:
                     finalStoragePath,
+                cloudinaryAssetId:
+                    cloudinaryDetails.assetId,
+                cloudinaryPublicId:
+                    cloudinaryDetails.publicId,
+                cloudinaryResourceType:
+                    cloudinaryDetails.resourceType,
+                mediaFormat:
+                    cloudinaryDetails.format,
+                fileSize:
+                    cloudinaryDetails.bytes,
+                width:
+                    cloudinaryDetails.width,
+                height:
+                    cloudinaryDetails.height,
+                duration:
+                    cloudinaryDetails.duration,
                 source:
                     mediaSource,
                 updatedAt:
@@ -937,6 +996,10 @@ mediaForm.addEventListener(
 
             const previousStoragePath =
                 editingMedia?.storagePath ||
+                "";
+
+            const previousCloudinaryPublicId =
+                editingMedia?.cloudinaryPublicId ||
                 "";
 
 
@@ -1003,9 +1066,13 @@ mediaForm.addEventListener(
 
 
             showStatus(
-                editingMedia
-                    ? "✅ Media updated successfully!"
-                    : "✅ Media published successfully!",
+                previousCloudinaryPublicId &&
+                previousCloudinaryPublicId !==
+                    cloudinaryDetails.publicId
+                    ? `✅ Media updated. Remove old Cloudinary asset “${previousCloudinaryPublicId}” from the Cloudinary Media Library.`
+                    : (editingMedia
+                        ? "✅ Media updated successfully!"
+                        : "✅ Media published successfully!"),
                 "success"
             );
 
@@ -1017,22 +1084,6 @@ mediaForm.addEventListener(
 
         } catch (error) {
 
-            if (newlyUploadedStoragePath) {
-
-                deleteObject(
-                    storageRef(
-                        storage,
-                        newlyUploadedStoragePath
-                    )
-                ).catch(
-                    (cleanupError) => console.warn(
-                        "Failed upload cleanup error:",
-                        cleanupError
-                    )
-                );
-
-            }
-
             console.error(
                 "Media save error:",
                 error
@@ -1040,7 +1091,10 @@ mediaForm.addEventListener(
 
 
             showStatus(
-                "❌ " + error.message,
+                "❌ " + error.message +
+                (uploadedCloudinaryPublicId
+                    ? ` Cloudinary asset ${uploadedCloudinaryPublicId} was uploaded but the Firestore record was not saved.`
+                    : ""),
                 "error"
             );
 
@@ -1068,9 +1122,507 @@ async function loadDashboard() {
 
     await loadCounts();
 
+    await loadCreatorApplications();
+
     await loadRecentMedia();
 
 }
+
+
+// ==========================================
+// CREATOR VERIFICATION QUEUE
+// ==========================================
+
+function getApplicationTime(application) {
+
+    return application.submittedAt?.seconds ||
+        application.updatedAt?.seconds ||
+        0;
+
+}
+
+
+function appendApplicationDetail(
+    container,
+    label,
+    value
+) {
+
+    const detail =
+        document.createElement("p");
+
+    const labelElement =
+        document.createElement("strong");
+
+    labelElement.textContent = `${label}: `;
+    detail.append(labelElement, value || "Not provided");
+    container.append(detail);
+
+}
+
+
+function createCreatorApplicationCard(application) {
+
+    const card =
+        document.createElement("article");
+
+    card.className =
+        "creator-application-card";
+
+    card.dataset.applicationUid =
+        application.uid;
+
+
+    const heading =
+        document.createElement("div");
+
+    heading.className =
+        "creator-application-heading";
+
+
+    const identity =
+        document.createElement("div");
+
+    const title =
+        document.createElement("h3");
+
+    title.textContent =
+        application.channelName ||
+        "Unnamed creator";
+
+    const handle =
+        document.createElement("span");
+
+    handle.textContent =
+        `@${application.channelHandle || "unknown"}`;
+
+    identity.append(title, handle);
+
+
+    const badge =
+        document.createElement("span");
+
+    badge.className =
+        "creator-queue-badge";
+
+    badge.textContent =
+        "Pending review";
+
+    heading.append(identity, badge);
+
+
+    const details =
+        document.createElement("div");
+
+    details.className =
+        "creator-application-details";
+
+    appendApplicationDetail(
+        details,
+        "Category",
+        application.category
+    );
+
+    appendApplicationDetail(
+        details,
+        "Description",
+        application.bio
+    );
+
+
+    if (
+        application.website &&
+        isValidPublicURL(application.website)
+    ) {
+
+        const websiteLine =
+            document.createElement("p");
+
+        const websiteLabel =
+            document.createElement("strong");
+
+        const websiteLink =
+            document.createElement("a");
+
+        websiteLabel.textContent =
+            "Website: ";
+
+        websiteLink.href =
+            application.website;
+
+        websiteLink.textContent =
+            application.website;
+
+        websiteLink.target = "_blank";
+        websiteLink.rel = "noopener noreferrer";
+
+        websiteLine.append(
+            websiteLabel,
+            websiteLink
+        );
+
+        details.append(websiteLine);
+
+    }
+
+
+    const declaration =
+        document.createElement("p");
+
+    declaration.className =
+        "creator-rights-status";
+
+    declaration.textContent =
+        application.rightsConfirmed
+            ? "✓ Content-rights declaration confirmed"
+            : "⚠ Content-rights declaration missing";
+
+
+    const actions =
+        document.createElement("div");
+
+    actions.className =
+        "creator-application-actions";
+
+    const approveButton =
+        document.createElement("button");
+
+    approveButton.type = "button";
+    approveButton.className =
+        "creator-review-action approve-creator";
+    approveButton.dataset.creatorAction =
+        "approve";
+    approveButton.textContent =
+        "✓ Approve creator";
+
+
+    const rejectButton =
+        document.createElement("button");
+
+    rejectButton.type = "button";
+    rejectButton.className =
+        "creator-review-action reject-creator";
+    rejectButton.dataset.creatorAction =
+        "reject";
+    rejectButton.textContent =
+        "Request changes";
+
+    actions.append(
+        approveButton,
+        rejectButton
+    );
+
+    card.append(
+        heading,
+        details,
+        declaration,
+        actions
+    );
+
+    return card;
+
+}
+
+
+async function loadCreatorApplications() {
+
+    if (
+        !creatorApplicationsList ||
+        !creatorApplicationCount
+    ) return;
+
+    creatorApplicationsList.innerHTML =
+        '<div class="empty-state">Loading creator applications…</div>';
+
+
+    try {
+
+        const snapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "creatorApplications"
+                )
+            );
+
+        const applications =
+            snapshot.docs
+                .map((applicationDoc) => ({
+                    id: applicationDoc.id,
+                    ...applicationDoc.data()
+                }))
+                .filter(
+                    (application) =>
+                        application.status ===
+                            "pending"
+                )
+                .sort(
+                    (a, b) =>
+                        getApplicationTime(b) -
+                        getApplicationTime(a)
+                );
+
+
+        creatorApplicationCount.textContent =
+            `${applications.length} pending`;
+
+        creatorApplicationCount.classList.toggle(
+            "connection-on",
+            applications.length === 0
+        );
+
+        creatorApplicationCount.classList.toggle(
+            "connection-off",
+            applications.length > 0
+        );
+
+
+        creatorApplicationsList.replaceChildren();
+
+
+        if (!applications.length) {
+
+            const emptyState =
+                document.createElement("div");
+
+            emptyState.className =
+                "empty-state";
+
+            emptyState.textContent =
+                "No creator applications are waiting for review.";
+
+            creatorApplicationsList.append(
+                emptyState
+            );
+
+            return;
+
+        }
+
+
+        applications.forEach(
+            (application) => {
+                creatorApplicationsList.append(
+                    createCreatorApplicationCard(
+                        application
+                    )
+                );
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Creator application load error:",
+            error
+        );
+
+        creatorApplicationCount.textContent =
+            "Unavailable";
+
+        creatorApplicationsList.innerHTML =
+            '<div class="empty-state">Creator applications could not be loaded. Deploy the latest Firestore rules and refresh.</div>';
+
+    }
+
+}
+
+
+async function reviewCreatorApplication(
+    uid,
+    action,
+    button
+) {
+
+    const applicationReference =
+        doc(
+            db,
+            "creatorApplications",
+            uid
+        );
+
+    const isApproval =
+        action === "approve";
+
+    let reviewNote = "";
+
+
+    if (isApproval) {
+
+        const confirmed = window.confirm(
+            "Approve this creator channel? Creator Studio access will become eligible."
+        );
+
+        if (!confirmed) return;
+
+    } else {
+
+        reviewNote = window.prompt(
+            "Tell the creator what must be changed:",
+            "Please update your channel information and resubmit."
+        )?.trim() || "";
+
+        if (!reviewNote) return;
+
+    }
+
+
+    button.disabled = true;
+    button.textContent =
+        isApproval
+            ? "Approving…"
+            : "Saving…";
+
+
+    try {
+
+        const applicationDocument =
+            await getDoc(
+                applicationReference
+            );
+
+
+        if (!applicationDocument.exists()) {
+            throw new Error(
+                "Creator application no longer exists."
+            );
+        }
+
+
+        const application =
+            applicationDocument.data();
+
+        if (application.status !== "pending") {
+            throw new Error(
+                "This application has already been reviewed."
+            );
+        }
+
+
+        const status =
+            isApproval
+                ? "approved"
+                : "rejected";
+
+        const reviewBatch =
+            writeBatch(db);
+
+        reviewBatch.update(
+            applicationReference,
+            {
+                status,
+                reviewNote,
+                reviewedAt:
+                    serverTimestamp(),
+                reviewedBy:
+                    ADMIN_UID,
+                updatedAt:
+                    serverTimestamp()
+            }
+        );
+
+
+        reviewBatch.set(
+            doc(db, "users", uid),
+            {
+                creatorStatus: status,
+                updatedAt:
+                    serverTimestamp()
+            },
+            { merge: true }
+        );
+
+
+        if (isApproval) {
+
+            reviewBatch.set(
+                doc(db, "creators", uid),
+                {
+                    uid,
+                    channelName:
+                        application.channelName,
+                    channelHandle:
+                        application.channelHandle,
+                    category:
+                        application.category,
+                    website:
+                        application.website || "",
+                    bio:
+                        application.bio,
+                    status:
+                        "approved",
+                    followers: 0,
+                    uploads: 0,
+                    approvedAt:
+                        serverTimestamp(),
+                    updatedAt:
+                        serverTimestamp()
+                },
+                { merge: true }
+            );
+
+        }
+
+
+        await reviewBatch.commit();
+
+
+        showStatus(
+            isApproval
+                ? "✅ Creator approved. Public creator record created."
+                : "✅ Changes requested. The creator can edit and resubmit.",
+            "success"
+        );
+
+        await loadCreatorApplications();
+
+    } catch (error) {
+
+        console.error(
+            "Creator review error:",
+            error
+        );
+
+        showStatus(
+            `❌ ${error.message}`,
+            "error"
+        );
+
+        button.disabled = false;
+        button.textContent =
+            isApproval
+                ? "✓ Approve creator"
+                : "Request changes";
+
+    }
+
+}
+
+
+creatorApplicationsList?.addEventListener(
+    "click",
+    (event) => {
+
+        const button =
+            event.target.closest(
+                "[data-creator-action]"
+            );
+
+        const card =
+            button?.closest(
+                "[data-application-uid]"
+            );
+
+        if (!button || !card) return;
+
+        reviewCreatorApplication(
+            card.dataset.applicationUid,
+            button.dataset.creatorAction,
+            button
+        );
+
+    }
+);
 
 
 // ==========================================
@@ -1093,13 +1645,16 @@ async function loadCounts() {
 
         try {
 
-            const snapshot =
-                await getDocs(
+            const countSnapshot =
+                await getCountFromServer(
                     collection(
                         db,
                         collectionName
                     )
                 );
+
+            const collectionCount =
+                countSnapshot.data().count;
 
 
             if (
@@ -1108,7 +1663,7 @@ async function loadCounts() {
             ) {
 
                 wallpaperCount.textContent =
-                    snapshot.size;
+                    collectionCount;
 
             }
 
@@ -1119,7 +1674,7 @@ async function loadCounts() {
             ) {
 
                 imageCount.textContent =
-                    snapshot.size;
+                    collectionCount;
 
             }
 
@@ -1130,7 +1685,7 @@ async function loadCounts() {
             ) {
 
                 videoCount.textContent =
-                    snapshot.size;
+                    collectionCount;
 
             }
 
@@ -1183,12 +1738,15 @@ async function loadRecentMedia() {
 
             try {
 
+                const collectionReference =
+                    collection(
+                        db,
+                        collectionName
+                    );
+
                 const mediaQuery =
                     query(
-                        collection(
-                            db,
-                            collectionName
-                        ),
+                        collectionReference,
 
                         orderBy(
                             "createdAt",
@@ -1199,10 +1757,29 @@ async function loadRecentMedia() {
                     );
 
 
-                snapshot =
+                const orderedSnapshot =
                     await getDocs(
                         mediaQuery
                     );
+
+                const countSnapshot =
+                    await getCountFromServer(
+                        collectionReference
+                    );
+
+                const expectedRecentCount =
+                    Math.min(
+                        10,
+                        countSnapshot.data().count
+                    );
+
+                snapshot =
+                    orderedSnapshot.size <
+                        expectedRecentCount
+                        ? await getDocs(
+                            collectionReference
+                        )
+                        : orderedSnapshot;
 
             } catch (queryError) {
 
@@ -1505,8 +2082,13 @@ function startEditingMedia(media) {
     mediaDescription.value =
         media.description || "";
 
-    mediaUrl.value =
+    const existingURL =
         getMediaURL(media);
+
+    mediaUrl.value =
+        isValidPublicURL(existingURL)
+            ? existingURL
+            : "";
 
     trending.checked =
         Boolean(media.trending);
@@ -1520,10 +2102,6 @@ function startEditingMedia(media) {
     cancelEditBtn?.classList.remove(
         "hidden"
     );
-
-
-    const existingURL =
-        getMediaURL(media);
 
 
     if (existingURL) {
@@ -1616,7 +2194,10 @@ async function deleteMedia(media) {
 
     const confirmed =
         window.confirm(
-            `Delete “${media.title || "Untitled"}”? This cannot be undone.`
+            `Delete “${media.title || "Untitled"}”? This cannot be undone.` +
+            (media.cloudinaryPublicId
+                ? `\n\nThe website record will be deleted. Also remove Cloudinary asset “${media.cloudinaryPublicId}” from the Cloudinary Media Library.`
+                : "")
         );
 
 
@@ -1672,7 +2253,9 @@ async function deleteMedia(media) {
 
 
     showStatus(
-        "✅ Media deleted successfully.",
+        media.cloudinaryPublicId
+            ? `✅ Website record deleted. Now remove Cloudinary asset “${media.cloudinaryPublicId}” from the Cloudinary Media Library.`
+            : "✅ Media deleted successfully.",
         "success"
     );
 
@@ -1817,8 +2400,19 @@ function getMediaLabel(type) {
 
 function showStatus(
     message,
-    type
+    type,
+    hideAfter = 5000
 ) {
+
+    if (statusMessageTimeout) {
+
+        clearTimeout(
+            statusMessageTimeout
+        );
+
+        statusMessageTimeout = null;
+
+    }
 
     statusMessage.textContent =
         message;
@@ -1838,16 +2432,23 @@ function showStatus(
     );
 
 
-    setTimeout(
-        () => {
+    if (hideAfter > 0) {
 
-            statusMessage.classList.add(
-                "hidden"
+        statusMessageTimeout =
+            setTimeout(
+                () => {
+
+                    statusMessage.classList.add(
+                        "hidden"
+                    );
+
+                    statusMessageTimeout = null;
+
+                },
+                hideAfter
             );
 
-        },
-        5000
-    );
+    }
 
 }
 
@@ -1900,6 +2501,7 @@ function escapeAttribute(value) {
 // ==========================================
 
 populateCategoryOptions();
+renderCloudinaryConnection();
 updateFileSettings();
 
 

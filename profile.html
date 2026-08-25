@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <meta
+        name="robots"
+        content="noindex, nofollow"
+    >
+    <meta
+        name="theme-color"
+        content="#090b10"
+    >
+
+    <title>BharatVarshOfficial | My Profile</title>
+
+    <link
+        rel="icon"
+        href="assets/logo.png"
+    >
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+    <link
+        rel="stylesheet"
+        href="profile.css"
+    >
+</head>
+
+<body>
+
+    <header class="profile-topbar">
+        <a
+            href="./index.html"
+            class="profile-brand"
+            aria-label="BharatVarshOfficial home"
+        >
+            <img
+                src="assets/logo.png"
+                alt=""
+            >
+            <span>BharatVarshOfficial</span>
+        </a>
+
+        <nav aria-label="Profile navigation">
+            <a href="./index.html">Home</a>
+            <a href="./index.html#featured">Wallpapers</a>
+        </nav>
+
+        <button
+            type="button"
+            id="profileSignOut"
+            class="topbar-action"
+            hidden
+        >
+            Sign out
+        </button>
+    </header>
+
+    <main class="profile-page">
+
+        <section
+            id="profileLoading"
+            class="profile-state"
+            aria-live="polite"
+        >
+            Loading your account…
+        </section>
+
+        <section
+            id="signedOutState"
+            class="profile-state signed-out-state"
+            hidden
+        >
+            <div class="state-icon">👤</div>
+            <h1>Sign in to open your profile</h1>
+            <p>
+                Your favourites, downloads and creator channel are private
+                until you sign in with Google.
+            </p>
+            <a href="./index.html#login">Continue to sign in</a>
+        </section>
+
+        <div
+            id="profileContent"
+            hidden
+        >
+            <section class="profile-hero">
+                <div class="profile-banner" aria-hidden="true">
+                    <span>OUR HISTORY</span>
+                    <span>OUR PRIDE</span>
+                    <span>OUR BHARAT</span>
+                </div>
+
+                <div class="profile-identity">
+                    <div class="profile-avatar-wrap">
+                        <img
+                            id="profileAvatar"
+                            class="profile-avatar"
+                            alt=""
+                            hidden
+                        >
+                        <span
+                            id="profileInitial"
+                            class="profile-initial"
+                            aria-hidden="true"
+                        >
+                            U
+                        </span>
+                    </div>
+
+                    <div class="profile-title">
+                        <h1 id="profileName">BharatVarsh User</h1>
+                        <p id="profileHandle">@bharatvarsh-user</p>
+                        <span>
+                            Private account centre · Your email and personal
+                            information are not shown publicly.
+                        </span>
+                    </div>
+
+                    <a
+                        href="./index.html#featured"
+                        class="profile-primary-action"
+                    >
+                        Browse wallpapers
+                    </a>
+                </div>
+            </section>
+
+            <div
+                class="profile-tabs"
+                role="tablist"
+                aria-label="Profile sections"
+            >
+                <button
+                    type="button"
+                    class="profile-tab active"
+                    data-profile-tab="overview"
+                    role="tab"
+                    aria-selected="true"
+                >
+                    Overview
+                </button>
+                <button
+                    type="button"
+                    class="profile-tab"
+                    data-profile-tab="favourites"
+                    role="tab"
+                    aria-selected="false"
+                >
+                    Favourites
+                </button>
+                <button
+                    type="button"
+                    class="profile-tab"
+                    data-profile-tab="creator"
+                    role="tab"
+                    aria-selected="false"
+                >
+                    Creator channel
+                </button>
+            </div>
+
+            <section
+                class="profile-panel"
+                data-profile-panel="overview"
+            >
+                <div class="profile-stats">
+                    <article>
+                        <span>❤️</span>
+                        <strong id="profilePageFavouriteCount">0</strong>
+                        <p>Favourite wallpapers</p>
+                    </article>
+                    <article>
+                        <span>⬇️</span>
+                        <strong id="profilePageDownloadCount">0</strong>
+                        <p>Downloads</p>
+                    </article>
+                    <article>
+                        <span>🎨</span>
+                        <strong id="profilePageCreatorStatus">Not created</strong>
+                        <p>Creator channel</p>
+                    </article>
+                </div>
+
+                <div class="profile-info-card">
+                    <div>
+                        <span class="eyebrow">YOUR ACCOUNT</span>
+                        <h2>Everything you save, in one place</h2>
+                        <p>
+                            Continue browsing wallpapers, manage favourites,
+                            and prepare your future creator channel.
+                        </p>
+                    </div>
+                    <a href="./index.html#featured">Explore collection</a>
+                </div>
+            </section>
+
+            <section
+                class="profile-panel"
+                data-profile-panel="favourites"
+                hidden
+            >
+                <div class="panel-heading">
+                    <div>
+                        <span class="eyebrow">SAVED BY YOU</span>
+                        <h2>Favourite wallpapers</h2>
+                    </div>
+                    <a href="./index.html#featured">Find more</a>
+                </div>
+
+                <div
+                    id="profileFavouritesGrid"
+                    class="profile-favourites-grid"
+                >
+                    <p class="empty-panel">Loading favourites…</p>
+                </div>
+            </section>
+
+            <section
+                class="profile-panel"
+                data-profile-panel="creator"
+                hidden
+            >
+                <div class="creator-foundation-card">
+                    <div class="creator-icon">🎨</div>
+                    <div>
+                        <span
+                            id="creatorStatusBadge"
+                            class="creator-status"
+                        >
+                            Not created
+                        </span>
+                        <h2 id="creatorHeading">
+                            Create your BharatVarsh creator channel
+                        </h2>
+                        <p id="creatorDescription">
+                            Reserve a private channel draft now. Public uploads,
+                            followers and verification will be enabled in the
+                            next creator milestone.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        id="createCreatorChannel"
+                    >
+                        Create channel draft
+                    </button>
+                </div>
+
+                <form
+                    id="creatorApplicationForm"
+                    class="creator-application-form"
+                    hidden
+                >
+                    <div class="panel-heading">
+                        <div>
+                            <span class="eyebrow">CREATOR ONBOARDING</span>
+                            <h2>Complete your channel application</h2>
+                            <p>
+                                Only your approved channel information becomes
+                                public. Your email remains private.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="creator-form-grid">
+                        <label>
+                            Channel name
+                            <input
+                                type="text"
+                                id="creatorChannelName"
+                                maxlength="60"
+                                required
+                            >
+                        </label>
+
+                        <label>
+                            Channel handle
+                            <input
+                                type="text"
+                                id="creatorChannelHandle"
+                                readonly
+                                required
+                            >
+                        </label>
+
+                        <label>
+                            Primary category
+                            <select
+                                id="creatorCategory"
+                                required
+                            >
+                                <option value="">Select category</option>
+                                <option value="Wallpapers">Wallpapers</option>
+                                <option value="Photography">Photography</option>
+                                <option value="Wedding & Events">Wedding & Events</option>
+                                <option value="Art & Design">Art & Design</option>
+                                <option value="Indian Culture">Indian Culture</option>
+                                <option value="Nature">Nature</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            Website (optional)
+                            <input
+                                type="url"
+                                id="creatorWebsite"
+                                placeholder="https://example.com"
+                            >
+                        </label>
+
+                        <label class="creator-form-wide">
+                            Channel description
+                            <textarea
+                                id="creatorBio"
+                                rows="5"
+                                maxlength="500"
+                                required
+                            ></textarea>
+                        </label>
+                    </div>
+
+                    <label class="creator-rights-confirmation">
+                        <input
+                            type="checkbox"
+                            id="creatorRightsConfirmation"
+                            required
+                        >
+                        <span>
+                            I will upload only content I created or have legal
+                            permission to publish.
+                        </span>
+                    </label>
+
+                    <button
+                        type="submit"
+                        id="submitCreatorApplication"
+                    >
+                        Submit for admin verification
+                    </button>
+                </form>
+
+                <div
+                    id="creatorApplicationStatus"
+                    class="creator-application-status"
+                    hidden
+                >
+                    <span
+                        id="creatorApplicationBadge"
+                        class="creator-status"
+                    ></span>
+                    <h2 id="creatorApplicationHeading"></h2>
+                    <p id="creatorApplicationMessage"></p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div
+        id="profileToast"
+        class="profile-toast"
+        role="status"
+        aria-live="polite"
+        hidden
+    ></div>
+
+    <script
+        type="module"
+        src="./profile.js"
+    ></script>
+</body>
+
+</html>

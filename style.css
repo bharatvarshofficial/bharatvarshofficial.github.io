@@ -2401,6 +2401,143 @@ img {
 
 
 /* ==========================================
+   ACCOUNT MENU
+   ========================================== */
+
+.account-menu {
+    position: relative;
+}
+
+.account-menu[hidden],
+.account-dropdown[hidden],
+#navLoginLink[hidden],
+.header-user-photo[hidden],
+.header-user-initial[hidden],
+.account-dropdown-photo[hidden],
+.account-dropdown-initial[hidden] {
+    display: none !important;
+}
+
+.header-actions .account-menu-button {
+    display: grid;
+    overflow: hidden;
+    padding: 0;
+    place-items: center;
+    border-radius: 50%;
+}
+
+.header-user-photo,
+.header-user-initial {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+}
+
+.header-user-photo {
+    object-fit: cover;
+}
+
+.header-user-initial,
+.account-dropdown-initial {
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--orange), #e95b00);
+    color: #ffffff;
+    font-weight: 800;
+}
+
+.account-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    z-index: 1100;
+    width: min(340px, calc(100vw - 24px));
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--card);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+    transform-origin: top right;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.account-dropdown.open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.account-dropdown-profile {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    padding: 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+.account-dropdown-profile > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.account-dropdown-profile strong,
+.account-dropdown-profile span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-dropdown-profile span {
+    color: var(--gray);
+    font-size: 12px;
+}
+
+.account-dropdown-photo,
+.account-dropdown-initial {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+}
+
+.account-dropdown-photo {
+    object-fit: cover;
+}
+
+.header-actions .account-menu-item {
+    display: flex;
+    width: 100%;
+    height: auto;
+    min-height: 48px;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 12px 18px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--white);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    transform: none;
+}
+
+.header-actions .account-menu-item:hover {
+    border-color: transparent;
+    background: rgba(255, 138, 0, 0.12);
+    color: var(--orange);
+    transform: none;
+}
+
+.header-actions .account-signout {
+    border-top: 1px solid var(--border);
+    color: #ff6b72;
+}
+
+
+/* ==========================================
    PHASE 1 INTEGRATION COMPONENTS
    ========================================== */
 

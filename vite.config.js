@@ -43,6 +43,14 @@ export default defineConfig({
                     import.meta.dirname,
                     "policies.html"
                 ),
+                profile: resolve(
+                    import.meta.dirname,
+                    "profile.html"
+                ),
+                creatorStudio: resolve(
+                    import.meta.dirname,
+                    "creator-studio.html"
+                ),
                 dashboard: resolve(
                     import.meta.dirname,
                     "css/js/firebase/dashboard.html"

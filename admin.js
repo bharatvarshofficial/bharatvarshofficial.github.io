@@ -1,443 +1,147 @@
 // ==========================================
 // BharatVarshOfficial
-// Admin Login
-// Firebase Authentication
-// ==========================================
-
-
-// ==========================================
-// FIREBASE SERVICES
+// Secure Google Admin Login
 // ==========================================
 
 import {
-    signInWithEmailAndPassword,
-    sendPasswordResetEmail
+    GoogleAuthProvider,
+    onAuthStateChanged,
+    signInWithPopup,
+    signOut
 } from "firebase/auth";
 
 import {
     auth
 } from "./firebase.js";
 
+const ADMIN_UID =
+    "hGrTepDbtsaCoSQL5D2bBG0iZzD2";
 
-console.log(
-    "✅ Firebase Connected Successfully"
-);
+const DASHBOARD_URL =
+    "./css/js/firebase/dashboard.html";
 
+const googleAdminLogin =
+    document.getElementById("googleAdminLogin");
 
-// ==========================================
-// DOM ELEMENTS
-// ==========================================
-
-const email =
-    document.getElementById("email");
-
-
-const password =
-    document.getElementById("password");
-
-
-const loginBtn =
-    document.getElementById("loginBtn");
-
-
-const forgotPassword =
-    document.getElementById("forgotPassword");
-
-
-const togglePassword =
-    document.getElementById("togglePassword");
-
+const googleAdminLoginLabel =
+    document.getElementById("googleAdminLoginLabel");
 
 const statusMessage =
     document.getElementById("statusMessage");
 
+const googleProvider =
+    new GoogleAuthProvider();
 
-// ==========================================
-// SHOW STATUS
-// ==========================================
+googleProvider.setCustomParameters({
+    prompt: "select_account"
+});
 
-function showStatus(
-    message,
-    type
-) {
+let authenticationReady = false;
 
-    statusMessage.textContent =
-        message;
-
-
+function showStatus(message, type) {
+    statusMessage.textContent = message;
     statusMessage.classList.remove(
         "hidden",
         "status-success",
         "status-error"
     );
-
-
-    if (type === "success") {
-
-        statusMessage.classList.add(
-            "status-success"
-        );
-
-    } else {
-
-        statusMessage.classList.add(
-            "status-error"
-        );
-
-    }
-
+    statusMessage.classList.add(
+        type === "success"
+            ? "status-success"
+            : "status-error"
+    );
 }
 
+function openDashboard() {
+    window.location.replace(DASHBOARD_URL);
+}
 
-// ==========================================
-// PASSWORD VISIBILITY
-// ==========================================
+onAuthStateChanged(auth, (user) => {
+    authenticationReady = true;
 
-togglePassword.addEventListener(
-    "click",
-    () => {
-
-        if (
-            password.type ===
-            "password"
-        ) {
-
-            password.type =
-                "text";
-
-            togglePassword.textContent =
-                "🙈";
-
-            togglePassword.setAttribute(
-                "aria-label",
-                "Hide password"
-            );
-
-        } else {
-
-            password.type =
-                "password";
-
-            togglePassword.textContent =
-                "👁️";
-
-            togglePassword.setAttribute(
-                "aria-label",
-                "Show password"
-            );
-
-        }
-
+    if (user?.uid === ADMIN_UID) {
+        showStatus(
+            "✅ Authorized admin detected. Opening dashboard…",
+            "success"
+        );
+        openDashboard();
+        return;
     }
-);
 
+    googleAdminLogin.disabled = false;
 
-// ==========================================
-// LOGIN
-// ==========================================
-
-loginBtn.addEventListener(
-    "click",
-    async () => {
-
-        const userEmail =
-            email.value.trim();
-
-
-        const userPassword =
-            password.value;
-
-
-        // ----------------------------------
-        // Validation
-        // ----------------------------------
-
-        if (!userEmail) {
-
-            showStatus(
-                "⚠️ Please enter your admin email.",
-                "error"
-            );
-
-            email.focus();
-
-            return;
-        }
-
-
-        if (!userPassword) {
-
-            showStatus(
-                "⚠️ Please enter your password.",
-                "error"
-            );
-
-            password.focus();
-
-            return;
-        }
-
-
-        try {
-
-            loginBtn.disabled =
-                true;
-
-            loginBtn.textContent =
-                "Logging in...";
-
-
-            showStatus(
-                "Checking your credentials...",
-                "success"
-            );
-
-
-            // ----------------------------------
-            // Firebase Login
-            // ----------------------------------
-
-            const userCredential =
-                await signInWithEmailAndPassword(
-                    auth,
-                    userEmail,
-                    userPassword
-                );
-
-
-            const user =
-                userCredential.user;
-
-
-            console.log(
-                "✅ Login successful:",
-                user.uid
-            );
-
-
-            showStatus(
-                "✅ Login successful. Opening dashboard...",
-                "success"
-            );
-
-
-            // ----------------------------------
-            // Dashboard
-            // ----------------------------------
-
-            setTimeout(
-                () => {
-
-                    window.location.href =
-                        "./css/js/firebase/dashboard.html";
-
-                },
-                700
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                "Login error:",
-                error
-            );
-
-
-            let message =
-                "❌ Login failed.";
-
-
-            if (
-                error.code ===
-                "auth/invalid-credential"
-            ) {
-
-                message =
-                    "❌ Email किंवा password चुकीचा आहे.";
-
-            }
-
-            else if (
-                error.code ===
-                "auth/user-not-found"
-            ) {
-
-                message =
-                    "❌ हा email Firebase Authentication मध्ये registered नाही.";
-
-            }
-
-            else if (
-                error.code ===
-                "auth/wrong-password"
-            ) {
-
-                message =
-                    "❌ Password चुकीचा आहे.";
-
-            }
-
-            else if (
-                error.code ===
-                "auth/too-many-requests"
-            ) {
-
-                message =
-                    "⚠️ खूप login attempts झाले. थोड्या वेळाने पुन्हा प्रयत्न करा.";
-
-            }
-
-            else {
-
-                message =
-                    "❌ " + error.message;
-
-            }
-
-
-            showStatus(
-                message,
-                "error"
-            );
-
-
-        } finally {
-
-            loginBtn.disabled =
-                false;
-
-            loginBtn.textContent =
-                "🔐 Login";
-
-        }
-
+    if (user) {
+        showStatus(
+            "Choose the authorized administrator Google account to continue.",
+            "error"
+        );
     }
-);
+});
 
+googleAdminLogin.addEventListener("click", async () => {
+    if (!authenticationReady) {
+        showStatus(
+            "Please wait while Firebase Authentication starts.",
+            "error"
+        );
+        return;
+    }
 
-// ==========================================
-// FORGOT PASSWORD
-// ==========================================
+    googleAdminLogin.disabled = true;
+    googleAdminLoginLabel.textContent =
+        "Checking account…";
 
-forgotPassword.addEventListener(
-    "click",
-    async () => {
+    showStatus(
+        "Select the authorized admin Google account.",
+        "success"
+    );
 
-        const userEmail =
-            email.value.trim();
-
-
-        if (!userEmail) {
-
-            showStatus(
-                "⚠️ आधी Admin Email टाका.",
-                "error"
-            );
-
-            email.focus();
-
-            return;
-        }
-
-
-        try {
-
-            forgotPassword.disabled =
-                true;
-
-            forgotPassword.textContent =
-                "Sending...";
-
-
-            await sendPasswordResetEmail(
+    try {
+        const credential =
+            await signInWithPopup(
                 auth,
-                userEmail
+                googleProvider
             );
 
+        if (credential.user.uid !== ADMIN_UID) {
+            await signOut(auth);
 
             showStatus(
-                "✅ Password reset email पाठवला आहे. तुमचा email inbox तपासा.",
-                "success"
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                "Password reset error:",
-                error
-            );
-
-
-            let message =
-                "❌ Password reset failed.";
-
-
-            if (
-                error.code ===
-                "auth/user-not-found"
-            ) {
-
-                message =
-                    "❌ हा email Firebase Authentication मध्ये registered नाही.";
-
-            }
-
-            else if (
-                error.code ===
-                "auth/invalid-email"
-            ) {
-
-                message =
-                    "❌ Email address चुकीचा आहे.";
-
-            }
-
-            else {
-
-                message =
-                    "❌ " + error.message;
-
-            }
-
-
-            showStatus(
-                message,
+                "❌ Access denied. This Google account is not the authorized administrator.",
                 "error"
             );
-
-
-        } finally {
-
-            forgotPassword.disabled =
-                false;
-
-            forgotPassword.textContent =
-                "Forgot Password?";
-
+            return;
         }
 
-    }
-);
+        showStatus(
+            "✅ Admin verified. Opening dashboard…",
+            "success"
+        );
 
+        openDashboard();
+    } catch (error) {
+        console.error("Admin Google login error:", error);
 
-// ==========================================
-// ENTER KEY LOGIN
-// ==========================================
-
-password.addEventListener(
-    "keydown",
-    (event) => {
+        let message =
+            "❌ Google sign-in failed. Please try again.";
 
         if (
-            event.key ===
-            "Enter"
+            error.code === "auth/popup-closed-by-user" ||
+            error.code === "auth/cancelled-popup-request"
         ) {
-
-            loginBtn.click();
-
+            message =
+                "Google sign-in was cancelled.";
+        } else if (
+            error.code === "auth/popup-blocked"
+        ) {
+            message =
+                "Allow pop-ups for this website and try again.";
         }
 
+        showStatus(message, "error");
+    } finally {
+        googleAdminLogin.disabled = false;
+        googleAdminLoginLabel.textContent =
+            "Continue with Google";
     }
-);
+});
