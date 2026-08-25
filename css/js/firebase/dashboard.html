@@ -98,6 +98,79 @@
 
 
         <!-- ==============================
+             CLOUDINARY SETUP
+        =============================== -->
+
+        <section class="cloudinary-section">
+
+            <div class="section-title cloudinary-title">
+
+                <div>
+                    <h2>Cloudinary Upload Connection</h2>
+
+                    <p>
+                        Connect the free media service once, then upload
+                        files directly from this dashboard.
+                    </p>
+                </div>
+
+                <span
+                    id="cloudinaryStatus"
+                    class="connection-badge connection-off"
+                >
+                    Not connected
+                </span>
+
+            </div>
+
+            <div class="cloudinary-config-grid">
+
+                <div class="form-group">
+                    <label for="cloudinaryCloudName">
+                        Cloud Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="cloudinaryCloudName"
+                        autocomplete="off"
+                        placeholder="Example: bharatvarshofficial"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="cloudinaryUploadPreset">
+                        Unsigned Upload Preset
+                    </label>
+
+                    <input
+                        type="text"
+                        id="cloudinaryUploadPreset"
+                        autocomplete="off"
+                        placeholder="Example: bharat_admin_upload"
+                    >
+                </div>
+
+            </div>
+
+            <button
+                type="button"
+                id="cloudinarySaveBtn"
+                class="cloudinary-save-btn"
+            >
+                Save Connection
+            </button>
+
+            <small class="security-note">
+                Never enter a Cloudinary API secret here. Cloud name and
+                unsigned preset are public browser settings saved only on
+                this device.
+            </small>
+
+        </section>
+
+
+        <!-- ==============================
              UPLOAD SECTION
         =============================== -->
 
@@ -156,12 +229,11 @@
                     <input
                         type="file"
                         id="mediaFile"
-                        disabled
                     >
 
                     <small id="fileHelp">
-                        Direct upload is paused until Cloudinary is connected.
-                        Use a public HTTPS media URL below.
+                        Save your Cloudinary connection above to enable
+                        direct file upload.
                     </small>
 
                 </div>
@@ -302,8 +374,8 @@
                     >
 
                     <small>
-                        Required while direct upload is paused. Enter an
-                        existing public HTTPS image or video URL.
+                        Optional fallback: enter an existing public HTTPS
+                        image or video URL when no file is selected.
                     </small>
 
                 </div>

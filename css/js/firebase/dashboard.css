@@ -243,6 +243,7 @@ body {
    SECTIONS
 ========================================== */
 
+.cloudinary-section,
 .upload-section,
 .recent-section {
     background: #161b22;
@@ -274,6 +275,87 @@ body {
     color: #8b949e;
 
     font-size: 14px;
+}
+
+
+.cloudinary-title {
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+
+.cloudinary-config-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 18px;
+}
+
+
+.connection-badge {
+    flex: 0 0 auto;
+
+    border-radius: 999px;
+
+    padding: 7px 11px;
+
+    font-size: 12px;
+
+    font-weight: bold;
+}
+
+
+.connection-off {
+    background: rgba(218, 54, 51, 0.15);
+
+    border: 1px solid #da3633;
+
+    color: #ff7b72;
+}
+
+
+.connection-on {
+    background: rgba(19, 136, 8, 0.15);
+
+    border: 1px solid #138808;
+
+    color: #7ee787;
+}
+
+
+.cloudinary-save-btn {
+    border: none;
+
+    border-radius: 8px;
+
+    background: #ff9933;
+
+    color: #111111;
+
+    padding: 11px 18px;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+
+.cloudinary-save-btn:hover {
+    background: #ffad5c;
+}
+
+
+.security-note {
+    color: #c9d1d9;
 }
 
 
@@ -772,9 +854,18 @@ small {
     }
 
 
+    .cloudinary-section,
     .upload-section,
     .recent-section {
         padding: 20px;
+    }
+
+
+    .cloudinary-title,
+    .cloudinary-config-grid {
+        grid-template-columns: 1fr;
+
+        flex-direction: column;
     }
 
 
