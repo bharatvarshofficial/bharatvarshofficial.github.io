@@ -411,7 +411,10 @@
             Collections
         </a>
 
-        <a href="#login">
+        <a
+            href="#login"
+            id="navLoginLink"
+        >
             Login
         </a>
 
@@ -425,6 +428,105 @@
     <!-- Header Actions -->
 
     <div class="header-actions">
+
+        <div
+            id="accountMenu"
+            class="account-menu"
+            hidden
+        >
+
+            <button
+                type="button"
+                id="accountMenuButton"
+                class="account-menu-button"
+                aria-label="Open account menu"
+                aria-haspopup="menu"
+                aria-expanded="false"
+            >
+                <img
+                    id="headerUserPhoto"
+                    class="header-user-photo"
+                    alt=""
+                    hidden
+                >
+
+                <span
+                    id="headerUserInitial"
+                    class="header-user-initial"
+                    aria-hidden="true"
+                >
+                    U
+                </span>
+            </button>
+
+            <div
+                id="accountDropdown"
+                class="account-dropdown"
+                role="menu"
+                hidden
+            >
+
+                <div class="account-dropdown-profile">
+                    <img
+                        id="accountDropdownPhoto"
+                        class="account-dropdown-photo"
+                        alt=""
+                        hidden
+                    >
+
+                    <span
+                        id="accountDropdownInitial"
+                        class="account-dropdown-initial"
+                        aria-hidden="true"
+                    >
+                        U
+                    </span>
+
+                    <div>
+                        <strong id="accountUserName">
+                            BharatVarsh User
+                        </strong>
+                        <span id="accountUserEmail"></span>
+                    </div>
+                </div>
+
+                <a
+                    href="./profile.html"
+                    class="account-menu-item"
+                    role="menuitem"
+                >
+                    👤 View your profile
+                </a>
+
+                <button
+                    type="button"
+                    id="accountFavouritesButton"
+                    class="account-menu-item"
+                    role="menuitem"
+                >
+                    ❤️ My favourites
+                </button>
+
+                <a
+                    href="./profile.html#creator"
+                    class="account-menu-item"
+                    role="menuitem"
+                >
+                    🎨 Creator channel
+                </a>
+
+                <button
+                    type="button"
+                    id="accountLogoutButton"
+                    class="account-menu-item account-signout"
+                    role="menuitem"
+                >
+                    ↪ Sign out
+                </button>
+
+            </div>
+
+        </div>
 
         <button
             id="darkMode"

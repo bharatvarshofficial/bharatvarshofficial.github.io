@@ -204,6 +204,66 @@ function cacheDOM() {
             "#loginButton"
         );
 
+    DOM.navLoginLink =
+        document.querySelector(
+            "#navLoginLink"
+        );
+
+    DOM.accountMenu =
+        document.querySelector(
+            "#accountMenu"
+        );
+
+    DOM.accountMenuButton =
+        document.querySelector(
+            "#accountMenuButton"
+        );
+
+    DOM.accountDropdown =
+        document.querySelector(
+            "#accountDropdown"
+        );
+
+    DOM.headerUserPhoto =
+        document.querySelector(
+            "#headerUserPhoto"
+        );
+
+    DOM.headerUserInitial =
+        document.querySelector(
+            "#headerUserInitial"
+        );
+
+    DOM.accountDropdownPhoto =
+        document.querySelector(
+            "#accountDropdownPhoto"
+        );
+
+    DOM.accountDropdownInitial =
+        document.querySelector(
+            "#accountDropdownInitial"
+        );
+
+    DOM.accountUserName =
+        document.querySelector(
+            "#accountUserName"
+        );
+
+    DOM.accountUserEmail =
+        document.querySelector(
+            "#accountUserEmail"
+        );
+
+    DOM.accountFavouritesButton =
+        document.querySelector(
+            "#accountFavouritesButton"
+        );
+
+    DOM.accountLogoutButton =
+        document.querySelector(
+            "#accountLogoutButton"
+        );
+
     DOM.logoutButton =
         document.querySelector(
             "#logoutButton"
@@ -643,6 +703,86 @@ async function createOrUpdateUserProfile(user) {
 // UPDATE USER UI
 // ============================================================
 
+function getUserInitial(user) {
+
+    const source =
+        user?.displayName ||
+        user?.email ||
+        "U";
+
+    return source
+        .trim()
+        .charAt(0)
+        .toUpperCase() || "U";
+
+}
+
+
+function updateAccountAvatar(
+    photoElement,
+    initialElement,
+    user
+) {
+
+    if (!photoElement || !initialElement) {
+        return;
+    }
+
+    if (user?.photoURL) {
+
+        photoElement.src =
+            user.photoURL;
+
+        photoElement.hidden =
+            false;
+
+        initialElement.hidden =
+            true;
+
+    } else {
+
+        photoElement.removeAttribute(
+            "src"
+        );
+
+        photoElement.hidden =
+            true;
+
+        initialElement.textContent =
+            getUserInitial(user);
+
+        initialElement.hidden =
+            false;
+
+    }
+
+}
+
+
+function setAccountMenuOpen(isOpen) {
+
+    if (
+        !DOM.accountMenuButton ||
+        !DOM.accountDropdown
+    ) {
+        return;
+    }
+
+    DOM.accountMenuButton.setAttribute(
+        "aria-expanded",
+        String(isOpen)
+    );
+
+    DOM.accountDropdown.hidden =
+        !isOpen;
+
+    DOM.accountDropdown.classList.toggle(
+        "open",
+        isOpen
+    );
+
+}
+
 function updateUserUI(user) {
 
     if (DOM.loginButton) {
@@ -656,6 +796,20 @@ function updateUserUI(user) {
 
         DOM.googleLoginButton.style.display =
             "none";
+
+    }
+
+    if (DOM.navLoginLink) {
+
+        DOM.navLoginLink.hidden =
+            true;
+
+    }
+
+    if (DOM.accountMenu) {
+
+        DOM.accountMenu.hidden =
+            false;
 
     }
 
@@ -722,6 +876,33 @@ function updateUserUI(user) {
 
     }
 
+    updateAccountAvatar(
+        DOM.headerUserPhoto,
+        DOM.headerUserInitial,
+        user
+    );
+
+    updateAccountAvatar(
+        DOM.accountDropdownPhoto,
+        DOM.accountDropdownInitial,
+        user
+    );
+
+    if (DOM.accountUserName) {
+
+        DOM.accountUserName.textContent =
+            user.displayName ||
+            "BharatVarsh User";
+
+    }
+
+    if (DOM.accountUserEmail) {
+
+        DOM.accountUserEmail.textContent =
+            user.email || "";
+
+    }
+
     updateProfileMetrics();
 
 }
@@ -748,6 +929,22 @@ function updateGuestUI() {
             "inline-flex";
 
     }
+
+    if (DOM.navLoginLink) {
+
+        DOM.navLoginLink.hidden =
+            false;
+
+    }
+
+    if (DOM.accountMenu) {
+
+        DOM.accountMenu.hidden =
+            true;
+
+    }
+
+    setAccountMenuOpen(false);
 
     if (DOM.mobileLoginButton) {
 
@@ -2722,6 +2919,56 @@ function setupEventListeners() {
     }
 
 
+    // YouTube-style account menu
+    if (DOM.accountMenuButton) {
+
+        DOM.accountMenuButton.addEventListener(
+            "click",
+            (event) => {
+
+                event.stopPropagation();
+
+                const isOpen =
+                    DOM.accountMenuButton
+                        .getAttribute(
+                            "aria-expanded"
+                        ) === "true";
+
+                setAccountMenuOpen(
+                    !isOpen
+                );
+
+            }
+        );
+
+    }
+
+    if (DOM.accountDropdown) {
+
+        DOM.accountDropdown.addEventListener(
+            "click",
+            (event) => event.stopPropagation()
+        );
+
+    }
+
+    document.addEventListener(
+        "click",
+        () => setAccountMenuOpen(false)
+    );
+
+    document.addEventListener(
+        "keydown",
+        (event) => {
+
+            if (event.key === "Escape") {
+                setAccountMenuOpen(false);
+            }
+
+        }
+    );
+
+
     // Logout
     if (DOM.logoutButton) {
 
@@ -2771,6 +3018,21 @@ function setupEventListeners() {
 
     }
 
+    if (DOM.accountLogoutButton) {
+
+        DOM.accountLogoutButton.addEventListener(
+            "click",
+            async () => {
+
+                setAccountMenuOpen(false);
+
+                await logoutUser();
+
+            }
+        );
+
+    }
+
 
     // Signed-in user favourites
     if (DOM.showFavouritesButton) {
@@ -2778,6 +3040,28 @@ function setupEventListeners() {
         DOM.showFavouritesButton.addEventListener(
             "click",
             () => {
+
+                showFavourites();
+
+                document.querySelector(
+                    "#featured"
+                )?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+            }
+        );
+
+    }
+
+    if (DOM.accountFavouritesButton) {
+
+        DOM.accountFavouritesButton.addEventListener(
+            "click",
+            () => {
+
+                setAccountMenuOpen(false);
 
                 showFavourites();
 
