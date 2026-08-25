@@ -150,17 +150,18 @@
                 <div class="form-group">
 
                     <label for="mediaFile">
-                        Upload File
+                        Direct File Upload
                     </label>
 
                     <input
                         type="file"
                         id="mediaFile"
+                        disabled
                     >
 
                     <small id="fileHelp">
-                        Upload to Firebase Storage: JPG, PNG or WebP,
-                        maximum 25 MB.
+                        Direct upload is paused until Cloudinary is connected.
+                        Use a public HTTPS media URL below.
                     </small>
 
                 </div>
@@ -291,7 +292,7 @@
                 <div class="form-group">
 
                     <label for="mediaUrl">
-                        Public Media URL (optional fallback)
+                        Public Media URL
                     </label>
 
                     <input
@@ -301,8 +302,8 @@
                     >
 
                     <small>
-                        Choose a file above, or enter an existing
-                        public https URL here.
+                        Required while direct upload is paused. Enter an
+                        existing public HTTPS image or video URL.
                     </small>
 
                 </div>

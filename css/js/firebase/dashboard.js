@@ -68,6 +68,10 @@ const MAX_IMAGE_SIZE =
 const MAX_VIDEO_SIZE =
     250 * 1024 * 1024;
 
+// Firebase Storage requires billing for this project.
+// Keep direct file selection disabled until Cloudinary is connected.
+const DIRECT_FILE_UPLOAD_ENABLED = false;
+
 const recentMediaByKey =
     new Map();
 
@@ -345,6 +349,22 @@ function updateFileSettings() {
     );
 
 
+    mediaFile.disabled =
+        !DIRECT_FILE_UPLOAD_ENABLED;
+
+
+    if (!DIRECT_FILE_UPLOAD_ENABLED) {
+
+        mediaFile.accept = "";
+
+        fileHelp.textContent =
+            "Direct file upload is paused until Cloudinary is connected. Paste a public HTTPS media URL below.";
+
+        return;
+
+    }
+
+
     if (type === "videos") {
 
         mediaFile.accept =
@@ -486,6 +506,13 @@ function isValidPublicURL(value) {
 function validateMediaFile(file, type) {
 
     if (!file) return "";
+
+
+    if (!DIRECT_FILE_UPLOAD_ENABLED) {
+
+        return "Direct upload is not active. Use a public media URL.";
+
+    }
 
 
     const isVideo =

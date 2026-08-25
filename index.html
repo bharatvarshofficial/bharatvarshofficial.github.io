@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 
 <head>
 
@@ -22,6 +22,56 @@
     <meta
         name="theme-color"
         content="#090b10"
+    >
+
+    <meta
+        name="robots"
+        content="index, follow, max-image-preview:large"
+    >
+
+    <meta
+        name="color-scheme"
+        content="dark light"
+    >
+
+    <link
+        rel="canonical"
+        href="https://bharatvarshofficial.github.io/"
+    >
+
+    <meta
+        property="og:type"
+        content="website"
+    >
+
+    <meta
+        property="og:title"
+        content="BharatVarshOfficial | Premium Indian Wallpapers"
+    >
+
+    <meta
+        property="og:description"
+        content="Discover premium Indian wallpapers celebrating our history, culture, heroes, temples, nature and festivals."
+    >
+
+    <meta
+        property="og:url"
+        content="https://bharatvarshofficial.github.io/"
+    >
+
+    <meta
+        property="og:image"
+        content="https://bharatvarshofficial.github.io/assets/hero-bg.jpg"
+    >
+
+    <meta
+        name="twitter:card"
+        content="summary_large_image"
+    >
+
+    <link
+        rel="manifest"
+        href="site.webmanifest"
     >
 
     <link
@@ -56,6 +106,13 @@
 
 
 <body>
+
+<a
+    class="skip-link"
+    href="#mainContent"
+>
+    Skip to main content
+</a>
 
 
 <!-- ==================================================
@@ -390,6 +447,8 @@
 
 </header>
 
+<main id="mainContent">
+
 
 
 <!-- ==================================================
@@ -462,10 +521,10 @@
 
 
                 <a
-                    href="#"
+                    href="#device-fit"
                     class="btn-secondary"
                 >
-                    AI Wallpaper
+                    Find My Wallpaper Size
                 </a>
 
             </div>
@@ -473,6 +532,58 @@
         </div>
 
     </div>
+
+</section>
+
+
+<!-- ==================================================
+     DEVICE WALLPAPER ADVISOR
+================================================== -->
+
+<section
+    class="device-advisor"
+    id="device-fit"
+    aria-labelledby="deviceAdvisorTitle"
+>
+
+    <div class="device-advisor-icon" aria-hidden="true">
+        📱
+    </div>
+
+    <div class="device-advisor-copy">
+
+        <p class="eyebrow">
+            Smart size recommendation
+        </p>
+
+        <h2 id="deviceAdvisorTitle">
+            Best wallpaper size for your screen
+        </h2>
+
+        <p id="deviceAdvisorMessage">
+            Detecting your display resolution…
+        </p>
+
+    </div>
+
+    <dl class="device-advisor-facts">
+
+        <div>
+            <dt>Recommended</dt>
+            <dd id="deviceResolution">—</dd>
+        </div>
+
+        <div>
+            <dt>Orientation</dt>
+            <dd id="deviceOrientation">—</dd>
+        </div>
+
+        <div>
+            <dt>Aspect ratio</dt>
+            <dd id="deviceAspectRatio">—</dd>
+        </div>
+
+    </dl>
 
 </section>
 
@@ -656,7 +767,6 @@
 </section>
 
 
-
 <!-- ==================================================
      LOGIN / SIGN IN
 ================================================== -->
@@ -698,28 +808,6 @@
         </button>
 
 
-        <!-- Mobile Login -->
-
-        <button
-            id="mobileLoginBtn"
-            class="login-btn mobile-login"
-            type="button"
-            disabled
-            aria-disabled="true"
-            title="Mobile OTP login will be added in a later verified phase"
-        >
-
-            <span class="login-icon">
-                📱
-            </span>
-
-            <span>
-                Continue with Mobile Number
-            </span>
-
-        </button>
-
-
         <div
             id="userProfile"
             class="user-profile"
@@ -735,7 +823,27 @@
             <div class="user-details">
                 <strong id="userName">BharatVarsh User</strong>
                 <span id="userEmail"></span>
+
+                <span class="user-metrics">
+                    <span>
+                        <strong id="profileFavouriteCount">0</strong>
+                        favourites
+                    </span>
+
+                    <span>
+                        <strong id="profileDownloadCount">0</strong>
+                        downloads
+                    </span>
+                </span>
             </div>
+
+            <button
+                type="button"
+                id="showFavouritesButton"
+                class="profile-action-button"
+            >
+                My Favourites
+            </button>
 
             <button
                 type="button"
@@ -749,7 +857,7 @@
 
 
         <p class="login-note">
-            Secure sign-in powered by Firebase.
+            Secure Google sign-in powered by Firebase.
         </p>
 
     </div>
@@ -766,8 +874,8 @@
 
     <div class="stat-box">
 
-        <h2>
-            5000+
+        <h2 id="statWallpaperCount">
+            0
         </h2>
 
         <p>
@@ -779,8 +887,8 @@
 
     <div class="stat-box">
 
-        <h2>
-            100K+
+        <h2 id="statDownloadCount">
+            0
         </h2>
 
         <p>
@@ -792,12 +900,12 @@
 
     <div class="stat-box">
 
-        <h2>
-            10K+
+        <h2 id="statCategoryCount">
+            0
         </h2>
 
         <p>
-            Happy Users
+            Categories
         </p>
 
     </div>
@@ -816,6 +924,8 @@
     </div>
 
 </section>
+
+</main>
 
 
 
@@ -903,6 +1013,21 @@
 
             <a href="#contact">
                 Contact
+            </a>
+
+
+            <a href="policies.html#about">
+                About Us
+            </a>
+
+
+            <a href="policies.html#privacy">
+                Privacy Policy
+            </a>
+
+
+            <a href="policies.html#terms">
+                Terms of Use
             </a>
 
         </div>
@@ -1043,6 +1168,103 @@
     </div>
 
 </footer>
+
+
+<!-- ==================================================
+     WALLPAPER PREVIEW DIALOG
+================================================== -->
+
+<div
+    id="wallpaperModal"
+    class="wallpaper-modal"
+    hidden
+>
+
+    <div
+        class="wallpaper-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="wallpaperModalTitle"
+        aria-describedby="wallpaperModalDescription"
+    >
+
+        <button
+            type="button"
+            id="wallpaperModalClose"
+            class="wallpaper-modal-close"
+            aria-label="Close wallpaper preview"
+        >
+            ✕
+        </button>
+
+        <div class="wallpaper-dialog-media">
+
+            <img
+                id="wallpaperModalImage"
+                alt=""
+            >
+
+        </div>
+
+        <div class="wallpaper-dialog-content">
+
+            <p
+                id="wallpaperModalCategory"
+                class="wallpaper-modal-category"
+            ></p>
+
+            <h2 id="wallpaperModalTitle">
+                Wallpaper preview
+            </h2>
+
+            <p id="wallpaperModalDescription"></p>
+
+            <div class="wallpaper-quality-grid">
+
+                <div>
+                    <span>Image size</span>
+                    <strong id="wallpaperModalResolution">
+                        Detecting…
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Your screen</span>
+                    <strong id="wallpaperModalDevice">—</strong>
+                </div>
+
+            </div>
+
+            <p
+                id="wallpaperModalFit"
+                class="wallpaper-fit-message"
+            ></p>
+
+            <div class="wallpaper-dialog-actions">
+
+                <button
+                    type="button"
+                    id="wallpaperModalFavourite"
+                    class="favorite-btn"
+                >
+                    ♡ Favourite
+                </button>
+
+                <button
+                    type="button"
+                    id="wallpaperModalDownload"
+                    class="download-btn"
+                >
+                    ↓ Download Original
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
 
 

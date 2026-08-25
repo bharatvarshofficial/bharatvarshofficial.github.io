@@ -1,0 +1,9 @@
+{
+    "name": "BharatVarshOfficial",
+    "short_name": "BharatVarsh",
+    "description": "Premium Indian wallpapers celebrating our history, pride and Bharat.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#090b10",
+    "theme_color": "#090b10"
+}
