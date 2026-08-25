@@ -1,0 +1,241 @@
+:root {
+    color-scheme: dark;
+    --bg: #090b10;
+    --card: #151a22;
+    --text: #ffffff;
+    --muted: #b9c0c8;
+    --border: #28303d;
+    --orange: #ff8a00;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Poppins", sans-serif;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.skip-link {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 20;
+    padding: 10px 14px;
+    border-radius: 9px;
+    background: var(--orange);
+    color: #ffffff;
+    font-weight: 700;
+    transform: translateY(-160%);
+}
+
+.skip-link:focus {
+    transform: translateY(0);
+}
+
+.policy-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: 76px;
+    padding: 10px 6%;
+    border-bottom: 1px solid var(--border);
+    background: rgba(9, 11, 16, 0.94);
+    backdrop-filter: blur(12px);
+}
+
+.policy-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.policy-brand img {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+}
+
+.policy-brand span,
+.policy-brand strong,
+.policy-brand small {
+    display: block;
+}
+
+.policy-brand strong {
+    font-size: 17px;
+}
+
+.policy-brand small {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.back-link {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.back-link:hover {
+    border-color: var(--orange);
+    color: var(--text);
+}
+
+.policy-layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 760px);
+    justify-content: center;
+    gap: 54px;
+    width: min(1120px, 90%);
+    margin: 0 auto;
+    padding: 64px 0 90px;
+}
+
+.policy-navigation {
+    position: sticky;
+    top: 112px;
+    align-self: start;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--card);
+}
+
+.policy-navigation p {
+    margin-bottom: 10px;
+    color: var(--orange);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.policy-navigation a {
+    display: block;
+    padding: 9px 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.policy-navigation a:hover {
+    color: var(--text);
+}
+
+.policy-intro {
+    margin-bottom: 44px;
+}
+
+.eyebrow {
+    color: var(--orange) !important;
+    font-size: 12px !important;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.policy-intro h1 {
+    margin: 7px 0 10px;
+    font-size: clamp(34px, 6vw, 58px);
+    line-height: 1.08;
+}
+
+.policy-content section {
+    scroll-margin-top: 108px;
+    margin-bottom: 54px;
+    padding-bottom: 54px;
+    border-bottom: 1px solid var(--border);
+}
+
+.policy-content section:last-child {
+    border-bottom: 0;
+}
+
+.policy-content h2 {
+    margin-bottom: 18px;
+    font-size: 28px;
+}
+
+.policy-content h3 {
+    margin: 28px 0 9px;
+    font-size: 17px;
+}
+
+.policy-content p,
+.policy-content li {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.85;
+}
+
+.policy-content p + p {
+    margin-top: 15px;
+}
+
+.policy-content ul {
+    margin: 10px 0 0 22px;
+}
+
+footer {
+    padding: 28px 6%;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    text-align: center;
+    font-size: 12px;
+}
+
+@media (max-width: 760px) {
+    .policy-brand small {
+        display: none;
+    }
+
+    .back-link {
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+
+    .policy-layout {
+        grid-template-columns: 1fr;
+        gap: 28px;
+        padding-top: 36px;
+    }
+
+    .policy-navigation {
+        position: static;
+        display: flex;
+        gap: 14px;
+        overflow-x: auto;
+        padding: 14px;
+        white-space: nowrap;
+    }
+
+    .policy-navigation p {
+        display: none;
+    }
+
+    .policy-navigation a {
+        padding: 5px;
+    }
+}

@@ -39,6 +39,10 @@ export default defineConfig({
             input: {
                 main: resolve(import.meta.dirname, "index.html"),
                 admin: resolve(import.meta.dirname, "admin.html"),
+                policies: resolve(
+                    import.meta.dirname,
+                    "policies.html"
+                ),
                 dashboard: resolve(
                     import.meta.dirname,
                     "css/js/firebase/dashboard.html"

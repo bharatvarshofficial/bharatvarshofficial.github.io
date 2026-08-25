@@ -41,6 +41,11 @@ import {
     mergeCategoryLabels
 } from "./categories.js";
 
+import {
+    getDeviceRecommendation,
+    getWallpaperFitMessage
+} from "./device-utils.js";
+
 
 // ============================================================
 // GLOBAL STATE
@@ -59,6 +64,14 @@ const STATE = {
     categories: [],
 
     favourites: new Set(),
+
+    userDownloads: 0,
+
+    activeWallpaperId: null,
+
+    deviceRecommendation: null,
+
+    lastFocusedElement: null,
 
     currentCategory: "All",
 
@@ -324,6 +337,111 @@ function cacheDOM() {
             "#login"
         );
 
+    DOM.profileFavouriteCount =
+        document.querySelector(
+            "#profileFavouriteCount"
+        );
+
+    DOM.profileDownloadCount =
+        document.querySelector(
+            "#profileDownloadCount"
+        );
+
+    DOM.showFavouritesButton =
+        document.querySelector(
+            "#showFavouritesButton"
+        );
+
+    DOM.deviceResolution =
+        document.querySelector(
+            "#deviceResolution"
+        );
+
+    DOM.deviceOrientation =
+        document.querySelector(
+            "#deviceOrientation"
+        );
+
+    DOM.deviceAspectRatio =
+        document.querySelector(
+            "#deviceAspectRatio"
+        );
+
+    DOM.deviceAdvisorMessage =
+        document.querySelector(
+            "#deviceAdvisorMessage"
+        );
+
+    DOM.statWallpaperCount =
+        document.querySelector(
+            "#statWallpaperCount"
+        );
+
+    DOM.statDownloadCount =
+        document.querySelector(
+            "#statDownloadCount"
+        );
+
+    DOM.statCategoryCount =
+        document.querySelector(
+            "#statCategoryCount"
+        );
+
+    DOM.wallpaperModal =
+        document.querySelector(
+            "#wallpaperModal"
+        );
+
+    DOM.wallpaperModalClose =
+        document.querySelector(
+            "#wallpaperModalClose"
+        );
+
+    DOM.wallpaperModalImage =
+        document.querySelector(
+            "#wallpaperModalImage"
+        );
+
+    DOM.wallpaperModalCategory =
+        document.querySelector(
+            "#wallpaperModalCategory"
+        );
+
+    DOM.wallpaperModalTitle =
+        document.querySelector(
+            "#wallpaperModalTitle"
+        );
+
+    DOM.wallpaperModalDescription =
+        document.querySelector(
+            "#wallpaperModalDescription"
+        );
+
+    DOM.wallpaperModalResolution =
+        document.querySelector(
+            "#wallpaperModalResolution"
+        );
+
+    DOM.wallpaperModalDevice =
+        document.querySelector(
+            "#wallpaperModalDevice"
+        );
+
+    DOM.wallpaperModalFit =
+        document.querySelector(
+            "#wallpaperModalFit"
+        );
+
+    DOM.wallpaperModalFavourite =
+        document.querySelector(
+            "#wallpaperModalFavourite"
+        );
+
+    DOM.wallpaperModalDownload =
+        document.querySelector(
+            "#wallpaperModalDownload"
+        );
+
 }
 
 
@@ -336,6 +454,10 @@ function initializeWebsite() {
     updateCopyrightYear();
 
     updatePageTitle();
+
+    updateDeviceAdvisor();
+
+    updateSiteStats();
 
     debugLog(
         "BharatVarshOfficial started."
@@ -492,6 +614,9 @@ async function createOrUpdateUserProfile(user) {
                         user.displayName ||
                         "BharatVarsh User",
 
+                    email:
+                        user.email || "",
+
                     photoURL:
                         user.photoURL || "",
 
@@ -597,6 +722,8 @@ function updateUserUI(user) {
 
     }
 
+    updateProfileMetrics();
+
 }
 
 
@@ -605,6 +732,8 @@ function updateUserUI(user) {
 // ============================================================
 
 function updateGuestUI() {
+
+    STATE.userDownloads = 0;
 
     if (DOM.loginButton) {
 
@@ -645,6 +774,8 @@ function updateGuestUI() {
             "none";
 
     }
+
+    updateProfileMetrics();
 
 }
 
@@ -877,6 +1008,8 @@ function renderWallpapers() {
 
     updateWallpaperCount();
 
+    updateSiteStats();
+
 
     if (!wallpapers.length) {
 
@@ -1014,8 +1147,12 @@ function createWallpaperCard(
             data-id="${id}"
         >
 
-            <div
-                class="wallpaper-image-container"
+            <button
+                type="button"
+                class="wallpaper-image-container wallpaper-preview-trigger"
+                data-action="preview"
+                data-id="${id}"
+                aria-label="Preview ${title}"
             >
 
                 <img
@@ -1032,7 +1169,11 @@ function createWallpaperCard(
                     Image unavailable
                 </div>
 
-            </div>
+                <span class="preview-hint">
+                    View details
+                </span>
+
+            </button>
 
             <h3>
                 ${title}
@@ -1120,6 +1261,15 @@ function handleWallpaperGridClick(
 
     }
 
+
+    if (action === "preview") {
+
+        openWallpaperPreview(
+            wallpaperId
+        );
+
+    }
+
 }
 
 
@@ -1151,11 +1301,9 @@ async function downloadWallpaper(
 
 
     const imageURL =
-        wallpaper.imageUrl ||
-        wallpaper.imageURL ||
-        wallpaper.image ||
-        wallpaper.url ||
-        wallpaper.downloadURL;
+        getWallpaperImageURL(
+            wallpaper
+        );
 
 
     if (!imageURL) {
@@ -1302,7 +1450,28 @@ async function updateDownloadCount(
                 }
             );
 
+            STATE.userDownloads += 1;
+
+            updateProfileMetrics();
+
         }
+
+        const wallpaper =
+            STATE.wallpapers.find(
+                item => item.id === wallpaperId
+            );
+
+        if (wallpaper) {
+
+            wallpaper.downloads =
+                Math.max(
+                    0,
+                    Number(wallpaper.downloads) || 0
+                ) + 1;
+
+        }
+
+        updateSiteStats();
 
     } catch (error) {
 
@@ -1325,6 +1494,10 @@ async function loadUserFavourites() {
     if (!STATE.currentUser) {
 
         STATE.favourites.clear();
+
+        STATE.userDownloads = 0;
+
+        updateProfileMetrics();
 
         return;
 
@@ -1368,11 +1541,25 @@ async function loadUserFavourites() {
                     favourites
                 );
 
+            STATE.userDownloads =
+                Number.isFinite(
+                    Number(data.downloads)
+                )
+                    ? Math.max(
+                        0,
+                        Number(data.downloads)
+                    )
+                    : 0;
+
         } else {
 
             STATE.favourites.clear();
 
+            STATE.userDownloads = 0;
+
         }
+
+        updateProfileMetrics();
 
     } catch (error) {
 
@@ -1380,6 +1567,10 @@ async function loadUserFavourites() {
             "Favourite loading error:",
             error
         );
+
+        STATE.userDownloads = 0;
+
+        updateProfileMetrics();
 
     }
 
@@ -1475,7 +1666,11 @@ async function toggleFavourite(
         }
 
 
+        updateProfileMetrics();
+
         renderWallpapers();
+
+        updateWallpaperModalFavouriteState();
 
 
     } catch (error) {
@@ -1693,6 +1888,8 @@ function renderCategories() {
                 }
             )
             .join("");
+
+    updateSiteStats();
 
 }
 
@@ -2575,6 +2772,28 @@ function setupEventListeners() {
     }
 
 
+    // Signed-in user favourites
+    if (DOM.showFavouritesButton) {
+
+        DOM.showFavouritesButton.addEventListener(
+            "click",
+            () => {
+
+                showFavourites();
+
+                document.querySelector(
+                    "#featured"
+                )?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+            }
+        );
+
+    }
+
+
     // Back to top
     if (DOM.backToTop) {
 
@@ -2606,6 +2825,28 @@ function setupEventListeners() {
     }
 
 
+    // Device recommendation follows orientation changes
+    let deviceResizeTimer = null;
+
+    window.addEventListener(
+        "resize",
+        () => {
+
+            window.clearTimeout(
+                deviceResizeTimer
+            );
+
+            deviceResizeTimer =
+                window.setTimeout(
+                    updateDeviceAdvisor,
+                    150
+                );
+
+        },
+        { passive: true }
+    );
+
+
     // Footer category links
     document.querySelectorAll(
         "[data-footer-category]"
@@ -2635,6 +2876,8 @@ function setupEventListeners() {
 
                 closeLoginModal();
 
+                closeWallpaperPreview();
+
             }
 
         }
@@ -2661,6 +2904,56 @@ function setupEventListeners() {
         );
 
     }
+
+
+    // Wallpaper preview dialog
+    DOM.wallpaperModalClose?.addEventListener(
+        "click",
+        closeWallpaperPreview
+    );
+
+    DOM.wallpaperModal?.addEventListener(
+        "click",
+        event => {
+
+            if (event.target === DOM.wallpaperModal) {
+
+                closeWallpaperPreview();
+
+            }
+
+        }
+    );
+
+    DOM.wallpaperModalFavourite?.addEventListener(
+        "click",
+        () => {
+
+            if (STATE.activeWallpaperId) {
+
+                toggleFavourite(
+                    STATE.activeWallpaperId
+                );
+
+            }
+
+        }
+    );
+
+    DOM.wallpaperModalDownload?.addEventListener(
+        "click",
+        () => {
+
+            if (STATE.activeWallpaperId) {
+
+                downloadWallpaper(
+                    STATE.activeWallpaperId
+                );
+
+            }
+
+        }
+    );
 
 }
 
@@ -2696,6 +2989,7 @@ function showLoading(
         `;
 
     }
+
 
 }
 
@@ -2836,6 +3130,169 @@ function updateWallpaperCount() {
 
 
 // ============================================================
+// DEVICE RECOMMENDATION + LIVE SITE STATS
+// ============================================================
+
+function updateDeviceAdvisor() {
+
+    const screenWidth =
+        window.screen?.width ||
+        window.innerWidth;
+
+    const screenHeight =
+        window.screen?.height ||
+        window.innerHeight;
+
+    STATE.deviceRecommendation =
+        getDeviceRecommendation({
+            screenWidth,
+            screenHeight,
+            devicePixelRatio:
+                window.devicePixelRatio || 1
+        });
+
+    const recommendation =
+        STATE.deviceRecommendation;
+
+    if (DOM.deviceResolution) {
+
+        DOM.deviceResolution.textContent =
+            recommendation.label;
+
+    }
+
+    if (DOM.deviceOrientation) {
+
+        DOM.deviceOrientation.textContent =
+            recommendation.orientation;
+
+    }
+
+    if (DOM.deviceAspectRatio) {
+
+        DOM.deviceAspectRatio.textContent =
+            recommendation.aspectRatio;
+
+    }
+
+    if (DOM.deviceAdvisorMessage) {
+
+        DOM.deviceAdvisorMessage.textContent =
+            `For the best fit, choose a ${recommendation.orientation.toLowerCase()} wallpaper near ${recommendation.label}. Always download the original-quality file.`;
+
+    }
+
+    if (DOM.wallpaperModalDevice) {
+
+        DOM.wallpaperModalDevice.textContent =
+            recommendation.label;
+
+    }
+
+
+}
+
+
+function formatCompactNumber(value) {
+
+    const number =
+        Math.max(
+            0,
+            Number(value) || 0
+        );
+
+    return new Intl.NumberFormat(
+        "en-IN",
+        {
+            notation:
+                number >= 1000
+                    ? "compact"
+                    : "standard",
+            maximumFractionDigits: 1
+        }
+    ).format(number);
+
+}
+
+
+function updateSiteStats() {
+
+    const downloads =
+        STATE.wallpapers.reduce(
+            (total, wallpaper) =>
+                total + Math.max(
+                    0,
+                    Number(wallpaper.downloads) || 0
+                ),
+            0
+        );
+
+    const categoryCount =
+        new Set(
+            STATE.wallpapers
+                .map(
+                    wallpaper =>
+                        canonicalizeCategory(
+                            wallpaper.category ||
+                            wallpaper.categoryKey
+                        )
+                )
+                .filter(Boolean)
+        ).size ||
+        STATE.categories.filter(
+            category => category !== "All"
+        ).length;
+
+    if (DOM.statWallpaperCount) {
+
+        DOM.statWallpaperCount.textContent =
+            formatCompactNumber(
+                STATE.wallpapers.length
+            );
+
+    }
+
+    if (DOM.statDownloadCount) {
+
+        DOM.statDownloadCount.textContent =
+            formatCompactNumber(downloads);
+
+    }
+
+    if (DOM.statCategoryCount) {
+
+        DOM.statCategoryCount.textContent =
+            formatCompactNumber(categoryCount);
+
+    }
+
+}
+
+
+function updateProfileMetrics() {
+
+    if (DOM.profileFavouriteCount) {
+
+        DOM.profileFavouriteCount.textContent =
+            formatCompactNumber(
+                STATE.favourites.size
+            );
+
+    }
+
+    if (DOM.profileDownloadCount) {
+
+        DOM.profileDownloadCount.textContent =
+            formatCompactNumber(
+                STATE.userDownloads
+            );
+
+    }
+
+}
+
+
+// ============================================================
 // UPDATE COPYRIGHT YEAR
 // ============================================================
 
@@ -2901,6 +3358,16 @@ function showToast(
         container.className =
             "toast-container";
 
+        container.setAttribute(
+            "aria-live",
+            "polite"
+        );
+
+        container.setAttribute(
+            "aria-atomic",
+            "false"
+        );
+
 
         document.body.appendChild(
             container
@@ -2917,6 +3384,13 @@ function showToast(
 
     toast.className =
         `toast toast-${type}`;
+
+    toast.setAttribute(
+        "role",
+        type === "error"
+            ? "alert"
+            : "status"
+    );
 
 
     toast.textContent =
@@ -3006,6 +3480,211 @@ function createFilename(
             80
         ) ||
         "BharatVarshWallpaper";
+
+}
+
+
+// ============================================================
+// WALLPAPER PREVIEW
+// ============================================================
+
+function getWallpaperImageURL(wallpaper) {
+
+    return wallpaper?.imageUrl ||
+        wallpaper?.imageURL ||
+        wallpaper?.image ||
+        wallpaper?.url ||
+        wallpaper?.downloadURL ||
+        "";
+
+}
+
+
+function getActiveWallpaper() {
+
+    if (!STATE.activeWallpaperId) return null;
+
+    return STATE.wallpapers.find(
+        wallpaper =>
+            wallpaper.id ===
+            STATE.activeWallpaperId
+    ) || null;
+
+}
+
+
+function openWallpaperPreview(wallpaperId) {
+
+    const wallpaper =
+        STATE.wallpapers.find(
+            item => item.id === wallpaperId
+        );
+
+    if (!wallpaper || !DOM.wallpaperModal) {
+
+        showToast(
+            "Wallpaper preview उपलब्ध नाही.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    const imageURL =
+        getWallpaperImageURL(wallpaper);
+
+    if (!imageURL) {
+
+        showToast(
+            "Wallpaper image उपलब्ध नाही.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    STATE.activeWallpaperId = wallpaperId;
+    STATE.lastFocusedElement = document.activeElement;
+
+    const title =
+        wallpaper.title ||
+        wallpaper.name ||
+        "Indian Wallpaper";
+
+    const category =
+        canonicalizeCategory(
+            wallpaper.category ||
+            wallpaper.categoryKey ||
+            "Indian"
+        );
+
+    DOM.wallpaperModalTitle.textContent = title;
+    DOM.wallpaperModalCategory.textContent = category;
+    DOM.wallpaperModalDescription.textContent =
+        wallpaper.description ||
+        "Premium wallpaper from BharatVarshOfficial.";
+
+    DOM.wallpaperModalImage.alt = title;
+    DOM.wallpaperModalImage.removeAttribute("src");
+    DOM.wallpaperModalResolution.textContent =
+        "Detecting…";
+
+    updateDeviceAdvisor();
+
+    const recommendation =
+        STATE.deviceRecommendation;
+
+    DOM.wallpaperModalDevice.textContent =
+        recommendation?.label ||
+        "Not available";
+
+    const updateImageDetails = () => {
+
+        const width =
+            DOM.wallpaperModalImage.naturalWidth ||
+            Number(wallpaper.width) ||
+            Number(wallpaper.imageWidth) ||
+            0;
+
+        const height =
+            DOM.wallpaperModalImage.naturalHeight ||
+            Number(wallpaper.height) ||
+            Number(wallpaper.imageHeight) ||
+            0;
+
+        DOM.wallpaperModalResolution.textContent =
+            width && height
+                ? `${width} × ${height} px`
+                : "Original quality";
+
+        DOM.wallpaperModalFit.textContent =
+            getWallpaperFitMessage(
+                width,
+                height,
+                recommendation
+            );
+
+    };
+
+    DOM.wallpaperModalImage.onload =
+        updateImageDetails;
+
+    DOM.wallpaperModalImage.onerror = () => {
+
+        DOM.wallpaperModalResolution.textContent =
+            "Image unavailable";
+
+        DOM.wallpaperModalFit.textContent =
+            "Try opening or downloading the original URL.";
+
+    };
+
+    DOM.wallpaperModalImage.src = imageURL;
+
+    DOM.wallpaperModal.hidden = false;
+    DOM.wallpaperModal.classList.add("open");
+    document.body.classList.add("modal-open");
+
+    updateWallpaperModalFavouriteState();
+
+    requestAnimationFrame(
+        () => DOM.wallpaperModalClose?.focus()
+    );
+
+}
+
+
+function closeWallpaperPreview() {
+
+    if (!DOM.wallpaperModal) return;
+
+    DOM.wallpaperModal.classList.remove("open");
+    DOM.wallpaperModal.hidden = true;
+
+    if (!DOM.loginModal?.classList.contains("active")) {
+
+        document.body.classList.remove("modal-open");
+
+    }
+
+    DOM.wallpaperModalImage?.removeAttribute("src");
+    STATE.activeWallpaperId = null;
+
+    if (
+        STATE.lastFocusedElement &&
+        document.contains(STATE.lastFocusedElement)
+    ) {
+
+        STATE.lastFocusedElement.focus();
+
+    }
+
+    STATE.lastFocusedElement = null;
+
+}
+
+
+function updateWallpaperModalFavouriteState() {
+
+    if (!DOM.wallpaperModalFavourite) return;
+
+    const isFavourite =
+        Boolean(STATE.activeWallpaperId) &&
+        STATE.favourites.has(
+            STATE.activeWallpaperId
+        );
+
+    DOM.wallpaperModalFavourite.classList.toggle(
+        "active",
+        isFavourite
+    );
+
+    DOM.wallpaperModalFavourite.textContent =
+        isFavourite
+            ? "♥ Saved"
+            : "♡ Favourite";
 
 }
 
