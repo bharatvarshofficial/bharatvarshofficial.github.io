@@ -96,26 +96,127 @@
                 </article>
             </section>
 
-            <section class="upload-boundary">
-                <div class="upload-boundary-icon">🛡️</div>
-                <div>
-                    <span class="eyebrow">SECURE UPLOAD GATEWAY</span>
-                    <h2>Photos, wallpapers and videos</h2>
-                    <p>
-                        Your account is eligible for creator uploads. File
-                        publishing will be activated after the signed upload
-                        service is connected; the Cloudinary API secret is
-                        never stored in browser code.
+            <section class="creator-upload-section">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">SECURE UPLOAD GATEWAY</span>
+                        <h2>Upload your original creation</h2>
+                        <p>
+                            Every file is stored privately in the creator
+                            review flow. It becomes public only after admin
+                            approval.
+                        </p>
+                    </div>
+                    <span
+                        id="uploadServiceStatus"
+                        class="service-badge service-offline"
+                    >
+                        Setup required
+                    </span>
+                </div>
+
+                <form id="creatorUploadForm">
+                    <div class="upload-form-grid">
+                        <label>
+                            Media type
+                            <select id="creatorMediaType" required>
+                                <option value="wallpapers">🖼️ Wallpaper</option>
+                                <option value="images">📷 Photo / Image</option>
+                                <option value="videos">🎬 Video</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            Category
+                            <select id="creatorMediaCategory" required>
+                                <option value="">Select category</option>
+                            </select>
+                        </label>
+
+                        <label class="upload-form-wide">
+                            File
+                            <input
+                                type="file"
+                                id="creatorMediaFile"
+                                accept="image/jpeg,image/png,image/webp"
+                                required
+                            >
+                            <small id="creatorFileHelp">
+                                JPG, PNG or WebP; maximum 25 MB.
+                            </small>
+                        </label>
+
+                        <div
+                            id="creatorPreview"
+                            class="creator-preview upload-form-wide"
+                            hidden
+                        >
+                            <img id="creatorImagePreview" alt="Selected media preview" hidden>
+                            <video id="creatorVideoPreview" controls hidden></video>
+                        </div>
+
+                        <label class="upload-form-wide">
+                            Title
+                            <input
+                                type="text"
+                                id="creatorMediaTitle"
+                                maxlength="100"
+                                required
+                            >
+                        </label>
+
+                        <label class="upload-form-wide">
+                            Description (optional)
+                            <textarea
+                                id="creatorMediaDescription"
+                                rows="4"
+                                maxlength="500"
+                            ></textarea>
+                        </label>
+                    </div>
+
+                    <label class="upload-rights-confirmation">
+                        <input
+                            type="checkbox"
+                            id="creatorMediaRights"
+                            required
+                        >
+                        <span>
+                            I created this media or have legal permission to
+                            publish it on BharatVarshOfficial.
+                        </span>
+                    </label>
+
+                    <div class="upload-progress-wrap" id="uploadProgressWrap" hidden>
+                        <progress id="creatorUploadProgress" max="100" value="0"></progress>
+                        <span id="creatorUploadProgressLabel">Preparing upload…</span>
+                    </div>
+
+                    <button type="submit" id="creatorUploadButton" disabled>
+                        Submit media for review
+                    </button>
+
+                    <p
+                        id="creatorUploadMessage"
+                        class="creator-upload-message"
+                        role="status"
+                        aria-live="polite"
+                    >
+                        Connect the signed upload service to activate this form.
                     </p>
-                    <div class="media-types" aria-label="Supported media">
-                        <span>📷 Photos</span>
-                        <span>🖼️ Wallpapers</span>
-                        <span>🎬 Videos</span>
+                </form>
+            </section>
+
+            <section class="creator-submissions-section">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">YOUR SUBMISSIONS</span>
+                        <h2>Upload review status</h2>
                     </div>
                 </div>
-                <button type="button" disabled>
-                    Secure upload activation pending
-                </button>
+                <div id="creatorSubmissionsList" class="creator-submissions-list">
+                    <p class="studio-empty-state">No submissions yet.</p>
+                </div>
             </section>
 
             <section class="review-flow">

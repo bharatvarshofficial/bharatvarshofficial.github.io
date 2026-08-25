@@ -17,6 +17,16 @@ service cloud.firestore {
         && request.auth.uid == userId;
     }
 
+    function isApprovedCreator(userId) {
+      return isOwner(userId)
+        && exists(
+          /databases/$(database)/documents/creators/$(userId)
+        )
+        && get(
+          /databases/$(database)/documents/creators/$(userId)
+        ).data.status == 'approved';
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
 
@@ -135,6 +145,107 @@ service cloud.firestore {
     match /creators/{creatorId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
+    }
+
+    match /creatorMediaSubmissions/{submissionId} {
+      allow read: if isAdmin()
+        || (
+          isSignedIn()
+          && resource.data.creatorId == request.auth.uid
+        );
+
+      allow create: if isApprovedCreator(request.auth.uid)
+        && request.resource.data.creatorId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.rightsConfirmed == true
+        && request.resource.data.keys().hasOnly([
+          'creatorId',
+          'title',
+          'description',
+          'category',
+          'mediaType',
+          'resourceType',
+          'secureUrl',
+          'publicId',
+          'assetId',
+          'format',
+          'bytes',
+          'width',
+          'height',
+          'duration',
+          'status',
+          'rightsConfirmed',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 3
+        && request.resource.data.title.size() <= 100
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 500
+        && request.resource.data.category in [
+          'Chhatrapati Shivaji Maharaj',
+          'Indian Army',
+          'Freedom Fighters',
+          'Temples',
+          'Festivals',
+          'Indian Culture',
+          'Nature / India',
+          'Anime',
+          'Country',
+          'Other'
+        ]
+        && request.resource.data.mediaType in [
+          'wallpapers',
+          'images',
+          'videos'
+        ]
+        && (
+          (
+            request.resource.data.mediaType in [
+              'wallpapers',
+              'images'
+            ]
+            && request.resource.data.resourceType == 'image'
+            && request.resource.data.bytes <= 26214400
+          )
+          || (
+            request.resource.data.mediaType == 'videos'
+            && request.resource.data.resourceType == 'video'
+            && request.resource.data.bytes <= 104857600
+          )
+        )
+        && request.resource.data.secureUrl is string
+        && request.resource.data.secureUrl.matches(
+          'https://res\\.cloudinary\\.com/kgxel7wp/.*'
+        )
+        && request.resource.data.publicId is string
+        && request.resource.data.publicId.size() >= 3
+        && request.resource.data.publicId.size() <= 255
+        && request.resource.data.assetId is string
+        && request.resource.data.assetId.size() >= 3
+        && request.resource.data.assetId.size() <= 255
+        && request.resource.data.format is string
+        && request.resource.data.format.size() <= 20
+        && request.resource.data.bytes is int
+        && request.resource.data.bytes > 0
+        && request.resource.data.width is int
+        && request.resource.data.width >= 0
+        && request.resource.data.height is int
+        && request.resource.data.height >= 0
+        && request.resource.data.duration is number
+        && request.resource.data.duration >= 0
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isAdmin();
+
+      allow delete: if isAdmin()
+        || (
+          isSignedIn()
+          && resource.data.creatorId == request.auth.uid
+          && resource.data.status == 'rejected'
+        );
     }
 
     match /categories/{categoryId} {

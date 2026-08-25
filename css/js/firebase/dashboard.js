@@ -23,6 +23,7 @@ import {
     getCountFromServer,
     getDoc,
     getDocs,
+    increment,
     query,
     orderBy,
     limit,
@@ -72,6 +73,9 @@ const ALLOWED_COLLECTIONS =
     ]);
 
 const recentMediaByKey =
+    new Map();
+
+const creatorMediaById =
     new Map();
 
 let cloudinaryConfig =
@@ -174,6 +178,16 @@ const creatorApplicationCount =
 const creatorApplicationsList =
     document.getElementById(
         "creatorApplicationsList"
+    );
+
+const creatorMediaSubmissionCount =
+    document.getElementById(
+        "creatorMediaSubmissionCount"
+    );
+
+const creatorMediaSubmissionsList =
+    document.getElementById(
+        "creatorMediaSubmissionsList"
     );
 
 
@@ -1124,6 +1138,8 @@ async function loadDashboard() {
 
     await loadCreatorApplications();
 
+    await loadCreatorMediaSubmissions();
+
     await loadRecentMedia();
 
 }
@@ -1621,6 +1637,472 @@ creatorApplicationsList?.addEventListener(
             button
         );
 
+    }
+);
+
+
+// ==========================================
+// CREATOR MEDIA REVIEW QUEUE
+// ==========================================
+
+function isTrustedCreatorMediaURL(value) {
+
+    try {
+
+        const url = new URL(value);
+
+        return url.protocol === "https:" &&
+            url.hostname === "res.cloudinary.com" &&
+            url.pathname.startsWith("/kgxel7wp/");
+
+    } catch {
+
+        return false;
+
+    }
+
+}
+
+
+function createCreatorMediaReviewCard(submission) {
+
+    const card = document.createElement("article");
+    card.className = "creator-media-review-card";
+    card.dataset.creatorSubmissionId = submission.id;
+
+    const media = submission.resourceType === "video"
+        ? document.createElement("video")
+        : document.createElement("img");
+
+    media.src = submission.secureUrl;
+    media.preload = "metadata";
+
+    if (media instanceof HTMLImageElement) {
+        media.alt = submission.title || "Creator media";
+        media.loading = "lazy";
+    } else {
+        media.controls = true;
+    }
+
+    const information = document.createElement("div");
+    information.className = "creator-media-review-info";
+
+    const heading = document.createElement("div");
+    heading.className = "creator-media-review-heading";
+
+    const title = document.createElement("h3");
+    title.textContent = submission.title || "Untitled media";
+
+    const badge = document.createElement("span");
+    badge.className = "creator-media-review-badge";
+    badge.textContent = "Pending review";
+
+    heading.append(title, badge);
+
+    const creatorLine = document.createElement("p");
+    const creatorLabel = document.createElement("strong");
+    creatorLabel.textContent = "Creator: ";
+    creatorLine.append(
+        creatorLabel,
+        submission.creator?.channelName ||
+            submission.creatorId ||
+            "Unknown creator"
+    );
+
+    const categoryLine = document.createElement("p");
+    const categoryLabel = document.createElement("strong");
+    categoryLabel.textContent = "Category: ";
+    categoryLine.append(
+        categoryLabel,
+        `${submission.category || "Other"} · ${submission.mediaType || "media"}`
+    );
+
+    const description = document.createElement("p");
+    description.textContent =
+        submission.description ||
+        "No description provided.";
+
+    const rights = document.createElement("p");
+    rights.className = "creator-rights-status";
+    rights.textContent = submission.rightsConfirmed
+        ? "✓ Creator confirmed publishing rights"
+        : "⚠ Rights declaration missing";
+
+    const actions = document.createElement("div");
+    actions.className = "creator-media-review-actions";
+
+    const publishButton = document.createElement("button");
+    publishButton.type = "button";
+    publishButton.className =
+        "creator-media-review-action publish-creator-media";
+    publishButton.dataset.creatorMediaAction = "approve";
+    publishButton.textContent = "✓ Approve & publish";
+
+    const rejectButton = document.createElement("button");
+    rejectButton.type = "button";
+    rejectButton.className =
+        "creator-media-review-action reject-creator-media";
+    rejectButton.dataset.creatorMediaAction = "reject";
+    rejectButton.textContent = "Request changes";
+
+    actions.append(publishButton, rejectButton);
+
+    information.append(
+        heading,
+        creatorLine,
+        categoryLine,
+        description,
+        rights,
+        actions
+    );
+
+    card.append(media, information);
+    return card;
+
+}
+
+
+async function loadCreatorMediaSubmissions() {
+
+    if (
+        !creatorMediaSubmissionCount ||
+        !creatorMediaSubmissionsList
+    ) return;
+
+    creatorMediaSubmissionsList.innerHTML =
+        '<div class="empty-state">Loading creator media submissions…</div>';
+
+    creatorMediaById.clear();
+
+    try {
+
+        const [submissionSnapshot, creatorSnapshot] =
+            await Promise.all([
+                getDocs(
+                    collection(
+                        db,
+                        "creatorMediaSubmissions"
+                    )
+                ),
+                getDocs(
+                    collection(db, "creators")
+                )
+            ]);
+
+        const creators = new Map(
+            creatorSnapshot.docs.map(
+                (creatorDocument) => [
+                    creatorDocument.id,
+                    creatorDocument.data()
+                ]
+            )
+        );
+
+        const submissions = submissionSnapshot.docs
+            .map((submissionDocument) => ({
+                id: submissionDocument.id,
+                ...submissionDocument.data(),
+                creator: creators.get(
+                    submissionDocument.data().creatorId
+                ) || null
+            }))
+            .filter(
+                (submission) =>
+                    submission.status === "pending"
+            )
+            .sort(
+                (a, b) =>
+                    (b.createdAt?.seconds || 0) -
+                    (a.createdAt?.seconds || 0)
+            );
+
+        submissions.forEach((submission) => {
+            creatorMediaById.set(
+                submission.id,
+                submission
+            );
+        });
+
+        creatorMediaSubmissionCount.textContent =
+            `${submissions.length} pending`;
+
+        creatorMediaSubmissionCount.classList.toggle(
+            "connection-on",
+            submissions.length === 0
+        );
+        creatorMediaSubmissionCount.classList.toggle(
+            "connection-off",
+            submissions.length > 0
+        );
+
+        creatorMediaSubmissionsList.replaceChildren();
+
+        if (!submissions.length) {
+            const empty = document.createElement("div");
+            empty.className = "empty-state";
+            empty.textContent =
+                "No creator media is waiting for review.";
+            creatorMediaSubmissionsList.append(empty);
+            return;
+        }
+
+        submissions.forEach((submission) => {
+            creatorMediaSubmissionsList.append(
+                createCreatorMediaReviewCard(submission)
+            );
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Creator media queue error:",
+            error
+        );
+
+        creatorMediaSubmissionCount.textContent =
+            "Unavailable";
+        creatorMediaSubmissionsList.innerHTML =
+            '<div class="empty-state">Creator media submissions could not be loaded. Deploy the latest Firestore rules and refresh.</div>';
+
+    }
+
+}
+
+
+async function reviewCreatorMedia(
+    submissionId,
+    action,
+    button
+) {
+
+    const cachedSubmission =
+        creatorMediaById.get(submissionId);
+
+    if (!cachedSubmission) {
+        showStatus(
+            "❌ Creator submission is no longer available.",
+            "error"
+        );
+        return;
+    }
+
+    const isApproval = action === "approve";
+    let reviewNote = "";
+
+    if (isApproval) {
+        const confirmed = window.confirm(
+            `Approve and publicly publish “${cachedSubmission.title || "this media"}”?`
+        );
+        if (!confirmed) return;
+    } else {
+        reviewNote = window.prompt(
+            "Tell the creator what must be changed:",
+            "Please update the media details or upload a corrected file."
+        )?.trim() || "";
+        if (!reviewNote) return;
+    }
+
+    button.disabled = true;
+    button.textContent = isApproval
+        ? "Publishing…"
+        : "Saving…";
+
+    try {
+        const submissionReference = doc(
+            db,
+            "creatorMediaSubmissions",
+            submissionId
+        );
+
+        const submissionDocument = await getDoc(
+            submissionReference
+        );
+
+        if (!submissionDocument.exists()) {
+            throw new Error("Submission no longer exists.");
+        }
+
+        const submission = submissionDocument.data();
+
+        if (submission.status !== "pending") {
+            throw new Error(
+                "This submission has already been reviewed."
+            );
+        }
+
+        if (!ALLOWED_COLLECTIONS.has(submission.mediaType)) {
+            throw new Error("Unsupported public media collection.");
+        }
+
+        if (
+            !submission.rightsConfirmed ||
+            !isTrustedCreatorMediaURL(submission.secureUrl)
+        ) {
+            throw new Error(
+                "Creator rights or Cloudinary URL validation failed."
+            );
+        }
+
+        const creatorReference = doc(
+            db,
+            "creators",
+            submission.creatorId
+        );
+        const creatorDocument = await getDoc(
+            creatorReference
+        );
+
+        if (
+            !creatorDocument.exists() ||
+            creatorDocument.data().status !== "approved"
+        ) {
+            throw new Error(
+                "The creator is no longer approved."
+            );
+        }
+
+        const creator = creatorDocument.data();
+        const reviewBatch = writeBatch(db);
+
+        if (isApproval) {
+            const publicReference = doc(
+                collection(db, submission.mediaType)
+            );
+
+            const publicMedia = {
+                title: submission.title,
+                category:
+                    canonicalizeCategory(
+                        submission.category
+                    ),
+                categoryKey:
+                    getCategoryKey(
+                        submission.category
+                    ),
+                description:
+                    submission.description || "",
+                trending: false,
+                featured: false,
+                storagePath: "",
+                cloudinaryAssetId:
+                    submission.assetId,
+                cloudinaryPublicId:
+                    submission.publicId,
+                cloudinaryResourceType:
+                    submission.resourceType,
+                mediaFormat:
+                    submission.format || "",
+                fileSize:
+                    Number(submission.bytes) || 0,
+                width:
+                    Number(submission.width) || 0,
+                height:
+                    Number(submission.height) || 0,
+                duration:
+                    Number(submission.duration) || 0,
+                source: "cloudinary-creator",
+                creatorId:
+                    submission.creatorId,
+                creatorName:
+                    creator.channelName || "Creator",
+                creatorHandle:
+                    creator.channelHandle || "",
+                createdBy:
+                    submission.creatorId,
+                downloads: 0,
+                favorites: 0,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            };
+
+            if (submission.resourceType === "video") {
+                publicMedia.videoUrl = submission.secureUrl;
+            } else {
+                publicMedia.imageUrl = submission.secureUrl;
+            }
+
+            reviewBatch.set(
+                publicReference,
+                publicMedia
+            );
+
+            reviewBatch.update(
+                creatorReference,
+                {
+                    uploads: increment(1),
+                    updatedAt: serverTimestamp()
+                }
+            );
+
+            reviewBatch.update(
+                submissionReference,
+                {
+                    status: "approved",
+                    reviewNote: "",
+                    reviewedAt: serverTimestamp(),
+                    reviewedBy: ADMIN_UID,
+                    publicCollection:
+                        submission.mediaType,
+                    publicMediaId:
+                        publicReference.id,
+                    updatedAt: serverTimestamp()
+                }
+            );
+        } else {
+            reviewBatch.update(
+                submissionReference,
+                {
+                    status: "rejected",
+                    reviewNote,
+                    reviewedAt: serverTimestamp(),
+                    reviewedBy: ADMIN_UID,
+                    updatedAt: serverTimestamp()
+                }
+            );
+        }
+
+        await reviewBatch.commit();
+
+        showStatus(
+            isApproval
+                ? "✅ Creator media approved and published publicly."
+                : "✅ Changes requested from the creator.",
+            "success"
+        );
+
+        await loadDashboard();
+
+    } catch (error) {
+
+        console.error("Creator media review error:", error);
+        showStatus(`❌ ${error.message}`, "error");
+        button.disabled = false;
+        button.textContent = isApproval
+            ? "✓ Approve & publish"
+            : "Request changes";
+
+    }
+
+}
+
+
+creatorMediaSubmissionsList?.addEventListener(
+    "click",
+    (event) => {
+        const button = event.target.closest(
+            "[data-creator-media-action]"
+        );
+        const card = button?.closest(
+            "[data-creator-submission-id]"
+        );
+
+        if (!button || !card) return;
+
+        reviewCreatorMedia(
+            card.dataset.creatorSubmissionId,
+            button.dataset.creatorMediaAction,
+            button
+        );
     }
 );
 

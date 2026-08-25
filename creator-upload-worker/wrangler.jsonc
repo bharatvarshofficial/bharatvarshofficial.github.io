@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bharatvarsh-creator-upload-signature",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-25",
+  "vars": {
+    "FIREBASE_PROJECT_ID": "bharatvarshofficial-21a59",
+    "CLOUDINARY_CLOUD_NAME": "kgxel7wp",
+    "CLOUDINARY_UPLOAD_PRESET": "bharatvarsh_creator_uploads",
+    "ALLOWED_ORIGINS": "http://localhost:5173,http://localhost:5174,https://bharatvarshofficial.github.io"
+  }
+}
