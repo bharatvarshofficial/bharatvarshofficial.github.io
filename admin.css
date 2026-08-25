@@ -1,401 +1,170 @@
-/* ==========================================
-   BharatVarshOfficial
-   Admin Login
-========================================== */
-
-
-/* ==========================================
-   RESET
-========================================== */
+:root {
+    --orange: #ff8a00;
+    --green: #138808;
+    --background: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #ffffff;
+    --muted: #9da7b3;
+}
 
 * {
     box-sizing: border-box;
-
     margin: 0;
-
     padding: 0;
 }
 
-
-/* ==========================================
-   BODY
-========================================== */
-
 body {
-
+    display: grid;
     min-height: 100vh;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
+    place-items: center;
     padding: 20px;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
     background:
-        radial-gradient(
-            circle at top,
-            #18222e,
-            #0d1117 55%
-        );
-
-    color: white;
+        radial-gradient(circle at 18% 15%, rgba(255, 138, 0, 0.16), transparent 30%),
+        radial-gradient(circle at 82% 85%, rgba(19, 136, 8, 0.15), transparent 32%),
+        var(--background);
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
 }
 
-
-/* ==========================================
-   LOGIN CONTAINER
-========================================== */
-
 .login-container {
-
-    width: 100%;
-
-    max-width: 390px;
-
-    background: #161b22;
-
-    border:
-        1px solid #30363d;
-
-    padding: 35px 30px;
-
-    border-radius: 18px;
-
-    box-shadow:
-        0 20px 50px
-        rgba(0, 0, 0, 0.45);
-
+    width: min(100%, 430px);
+    padding: 38px 32px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: rgba(22, 27, 34, 0.96);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.46);
     text-align: center;
 }
 
-
-/* ==========================================
-   LOGO
-========================================== */
-
-.logo {
-
-    font-size: 48px;
-
-    margin-bottom: 10px;
+.admin-logo {
+    width: 76px;
+    height: 76px;
+    margin-bottom: 18px;
+    object-fit: contain;
 }
 
-
-/* ==========================================
-   HEADINGS
-========================================== */
+.admin-eyebrow {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--orange);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
 
 h1 {
-
-    color: #ff9933;
-
+    color: var(--orange);
     font-size: 25px;
-
-    margin-bottom: 7px;
 }
 
-
 h2 {
-
-    color: #ffffff;
-
+    margin-top: 6px;
     font-size: 20px;
-
-    margin-bottom: 28px;
-
     font-weight: 500;
 }
 
-
-/* ==========================================
-   LABEL
-========================================== */
-
-.input-label {
-
-    display: block;
-
-    text-align: left;
-
-    color: #c9d1d9;
-
+.login-description {
+    margin: 20px 0 24px;
+    color: var(--muted);
     font-size: 14px;
-
-    font-weight: bold;
-
-    margin-bottom: 7px;
+    line-height: 1.6;
 }
 
-
-/* ==========================================
-   INPUT
-========================================== */
-
-input {
-
+.google-login-btn {
+    display: flex;
     width: 100%;
-
-    padding: 13px 14px;
-
-    margin-bottom: 17px;
-
-    border:
-        1px solid #30363d;
-
-    border-radius: 9px;
-
-    background: #0d1117;
-
-    color: white;
-
+    align-items: center;
+    justify-content: center;
+    gap: 11px;
+    padding: 13px 18px;
+    border: 1px solid #d8dee4;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #1f2328;
+    cursor: pointer;
     font-size: 15px;
-
-    outline: none;
-
-    transition:
-        border-color 0.2s,
-        box-shadow 0.2s;
+    font-weight: 700;
+    transition: transform 0.12s, box-shadow 0.2s;
 }
 
-
-input::placeholder {
-
-    color: #6e7681;
+.google-login-btn:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    transform: translateY(-1px);
 }
 
-
-input:focus {
-
-    border-color: #ff9933;
-
-    box-shadow:
-        0 0 0 3px
-        rgba(255, 153, 51, 0.12);
+.google-login-btn:disabled {
+    cursor: wait;
+    opacity: 0.65;
+    transform: none;
 }
 
-
-/* ==========================================
-   PASSWORD
-========================================== */
-
-.password-wrapper {
-
-    position: relative;
+.google-icon {
+    display: grid;
+    width: 24px;
+    height: 24px;
+    place-items: center;
+    border-radius: 50%;
+    background: conic-gradient(
+        from -45deg,
+        #4285f4 0 25%,
+        #34a853 25% 50%,
+        #fbbc05 50% 75%,
+        #ea4335 75% 100%
+    );
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 800;
 }
-
-
-.password-wrapper input {
-
-    padding-right: 50px;
-}
-
-
-.password-toggle {
-
-    position: absolute;
-
-    right: 8px;
-
-    top: 0;
-
-    width: 42px;
-
-    height: 43px;
-
-    padding: 0;
-
-    border: none;
-
-    background: transparent;
-
-    color: white;
-
-    cursor: pointer;
-
-    font-size: 18px;
-}
-
-
-.password-toggle:hover {
-
-    background: transparent;
-}
-
-
-/* ==========================================
-   LOGIN BUTTON
-========================================== */
-
-.login-btn {
-
-    width: 100%;
-
-    padding: 13px;
-
-    border: none;
-
-    border-radius: 9px;
-
-    background: #138808;
-
-    color: white;
-
-    font-size: 16px;
-
-    font-weight: bold;
-
-    cursor: pointer;
-
-    transition:
-        background 0.2s,
-        transform 0.1s;
-}
-
-
-.login-btn:hover {
-
-    background: #0f6d06;
-}
-
-
-.login-btn:active {
-
-    transform: scale(0.98);
-}
-
-
-.login-btn:disabled {
-
-    background: #555;
-
-    cursor: not-allowed;
-}
-
-
-/* ==========================================
-   FORGOT PASSWORD
-========================================== */
-
-.forgot-btn {
-
-    margin-top: 18px;
-
-    border: none;
-
-    background: transparent;
-
-    color: #58a6ff;
-
-    cursor: pointer;
-
-    font-size: 14px;
-}
-
-
-.forgot-btn:hover {
-
-    text-decoration: underline;
-}
-
-
-/* ==========================================
-   STATUS
-========================================== */
 
 .status-message {
-
     margin-top: 18px;
-
     padding: 11px;
-
     border-radius: 8px;
-
     font-size: 13px;
-
     line-height: 1.5;
 }
 
-
 .status-success {
-
-    background:
-        rgba(19, 136, 8, 0.15);
-
-    border:
-        1px solid #138808;
-
+    border: 1px solid var(--green);
+    background: rgba(19, 136, 8, 0.15);
     color: #7ee787;
 }
 
-
 .status-error {
-
-    background:
-        rgba(218, 54, 51, 0.15);
-
-    border:
-        1px solid #da3633;
-
+    border: 1px solid #da3633;
+    background: rgba(218, 54, 51, 0.15);
     color: #ff7b72;
 }
 
-
-/* ==========================================
-   SECURITY
-========================================== */
-
 .security-note {
-
-    margin-top: 25px;
-
-    color: #8b949e;
-
+    margin-top: 24px;
+    color: var(--muted);
     font-size: 12px;
 }
 
+.home-link {
+    display: inline-block;
+    margin-top: 18px;
+    color: #58a6ff;
+    font-size: 13px;
+    text-decoration: none;
+}
 
-/* ==========================================
-   UTILITY
-========================================== */
+.home-link:hover {
+    text-decoration: underline;
+}
 
 .hidden {
-
     display: none !important;
 }
 
-
-/* ==========================================
-   MOBILE
-========================================== */
-
 @media (max-width: 480px) {
-
     .login-container {
-
-        padding:
-            30px 20px;
-
+        padding: 30px 20px;
     }
-
 
     h1 {
-
         font-size: 22px;
-
     }
-
-
-    h2 {
-
-        font-size: 18px;
-
-    }
-
 }

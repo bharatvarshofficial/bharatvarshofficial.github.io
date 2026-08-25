@@ -1,153 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#0d1117">
 
     <title>BharatVarshOfficial | Admin Login</title>
 
-    <link
-        rel="stylesheet"
-        href="./admin.css"
-    >
-
+    <link rel="icon" href="./assets/logo.png">
+    <link rel="stylesheet" href="./admin.css">
 </head>
 
-
 <body>
-
-
     <main class="login-container">
-
-        <div class="logo">
-            🇮🇳
-        </div>
-
-
-        <h1>
-            BharatVarshOfficial
-        </h1>
-
-
-        <h2>
-            Admin Login
-        </h2>
-
-
-        <!-- =========================
-             EMAIL
-        ========================== -->
-
-        <label
-            for="email"
-            class="input-label"
-        >
-            Admin Email
-        </label>
-
-        <input
-            type="email"
-            id="email"
-            placeholder="Enter admin email"
-            autocomplete="email"
-            required
+        <img
+            class="admin-logo"
+            src="./assets/logo.png"
+            alt="BharatVarshOfficial"
         >
 
+        <span class="admin-eyebrow">SECURE ADMIN ACCESS</span>
 
-        <!-- =========================
-             PASSWORD
-        ========================== -->
+        <h1>BharatVarshOfficial</h1>
+        <h2>Admin Dashboard</h2>
 
-        <label
-            for="password"
-            class="input-label"
-        >
-            Password
-        </label>
-
-        <div class="password-wrapper">
-
-            <input
-                type="password"
-                id="password"
-                placeholder="Enter password"
-                autocomplete="current-password"
-                required
-            >
-
-            <button
-                type="button"
-                id="togglePassword"
-                class="password-toggle"
-                aria-label="Show password"
-            >
-                👁️
-            </button>
-
-        </div>
-
-
-        <!-- =========================
-             LOGIN BUTTON
-        ========================== -->
+        <p class="login-description">
+            Continue with the authorized Google account. Access is verified
+            using the Firebase Admin UID, not a Gmail password.
+        </p>
 
         <button
             type="button"
-            id="loginBtn"
-            class="login-btn"
+            id="googleAdminLogin"
+            class="google-login-btn"
         >
-            🔐 Login
+            <span class="google-icon" aria-hidden="true">G</span>
+            <span id="googleAdminLoginLabel">Continue with Google</span>
         </button>
-
-
-        <!-- =========================
-             FORGOT PASSWORD
-        ========================== -->
-
-        <button
-            type="button"
-            id="forgotPassword"
-            class="forgot-btn"
-        >
-            Forgot Password?
-        </button>
-
-
-        <!-- =========================
-             STATUS
-        ========================== -->
 
         <div
             id="statusMessage"
             class="status-message hidden"
+            role="status"
+            aria-live="polite"
         ></div>
 
-
-        <!-- =========================
-             SECURITY NOTE
-        ========================== -->
-
         <p class="security-note">
-            🔒 Authorized administrators only
+            🔒 Only the approved BharatVarshOfficial administrator can enter.
         </p>
 
+        <a class="home-link" href="./index.html">
+            ← Return to website
+        </a>
     </main>
 
-
-    <!-- Firebase Admin JS -->
-
-    <script
-        type="module"
-        src="./admin.js"
-    ></script>
-
-
+    <script type="module" src="./admin.js"></script>
 </body>
 
 </html>
