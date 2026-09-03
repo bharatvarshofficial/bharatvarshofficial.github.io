@@ -244,6 +244,7 @@ body {
 ========================================== */
 
 .creator-review-section,
+.creator-media-review-section,
 .cloudinary-section,
 .upload-section,
 .recent-section {
@@ -521,6 +522,109 @@ body {
 .creator-review-action:disabled {
     cursor: wait;
 
+    opacity: 0.6;
+}
+
+
+/* ==========================================
+   CREATOR MEDIA REVIEW
+========================================== */
+
+.creator-media-review-title {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.creator-media-submissions-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.creator-media-review-card {
+    overflow: hidden;
+    border: 1px solid #30363d;
+    border-radius: 13px;
+    background: #0d1117;
+}
+
+.creator-media-review-card > img,
+.creator-media-review-card > video {
+    display: block;
+    width: 100%;
+    height: 240px;
+    object-fit: contain;
+    background: #000000;
+}
+
+.creator-media-review-info {
+    padding: 18px;
+}
+
+.creator-media-review-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.creator-media-review-heading h3 {
+    font-size: 17px;
+}
+
+.creator-media-review-info p {
+    margin-top: 6px;
+    color: #8b949e;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.creator-media-review-info strong {
+    color: #c9d1d9;
+}
+
+.creator-media-review-badge {
+    flex: 0 0 auto;
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: rgba(210, 153, 34, 0.14);
+    color: #e3b341;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.creator-media-review-actions {
+    display: flex;
+    gap: 9px;
+    margin-top: 16px;
+}
+
+.creator-media-review-action {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.publish-creator-media {
+    border: 1px solid #238636;
+    background: #238636;
+}
+
+.reject-creator-media {
+    border: 1px solid #8b949e;
+    background: #21262d;
+}
+
+.creator-media-review-action:disabled {
+    cursor: wait;
     opacity: 0.6;
 }
 
@@ -982,7 +1086,8 @@ small {
 @media (max-width: 850px) {
 
     .stats-grid,
-    .media-grid {
+    .media-grid,
+    .creator-media-submissions-list {
         grid-template-columns:
             repeat(2, 1fr);
     }
@@ -1015,12 +1120,14 @@ small {
 
 
     .stats-grid,
-    .media-grid {
+    .media-grid,
+    .creator-media-submissions-list {
         grid-template-columns: 1fr;
     }
 
 
     .creator-review-section,
+    .creator-media-review-section,
     .cloudinary-section,
     .upload-section,
     .recent-section {
@@ -1037,8 +1144,10 @@ small {
 
 
     .creator-review-section .section-title,
+    .creator-media-review-title,
     .creator-application-heading,
-    .creator-application-actions {
+    .creator-application-actions,
+    .creator-media-review-actions {
         align-items: stretch;
 
         flex-direction: column;

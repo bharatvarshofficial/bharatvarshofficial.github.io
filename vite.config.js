@@ -15,6 +15,10 @@ const copyWallpaperAssets = {
             import.meta.dirname,
             "assets/wallpapers"
         );
+        const sourceLogo = resolve(
+            import.meta.dirname,
+            "assets/logo.png"
+        );
 
         const targetDirectory = resolve(
             outputDirectory,
@@ -28,6 +32,10 @@ const copyWallpaperAssets = {
         await cp(sourceDirectory, targetDirectory, {
             recursive: true
         });
+        await cp(
+            sourceLogo,
+            resolve(outputDirectory, "assets/logo.png")
+        );
     }
 };
 
@@ -46,6 +54,10 @@ export default defineConfig({
                 profile: resolve(
                     import.meta.dirname,
                     "profile.html"
+                ),
+                creator: resolve(
+                    import.meta.dirname,
+                    "creator.html"
                 ),
                 creatorStudio: resolve(
                     import.meta.dirname,

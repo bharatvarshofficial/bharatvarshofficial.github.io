@@ -1303,6 +1303,20 @@ function createWallpaperCard(
             "Indian"
         );
 
+    const creatorHandle =
+        typeof wallpaper.creatorHandle === "string"
+            ? wallpaper.creatorHandle.trim()
+            : "";
+    const creatorName =
+        escapeHTML(
+            wallpaper.creatorName ||
+            "Creator"
+        );
+    const creatorAttribution =
+        creatorHandle
+            ? `<a class="wallpaper-creator" href="creator.html?handle=${encodeURIComponent(creatorHandle)}">By ${creatorName}</a>`
+            : "";
+
 
     const imageURL =
         wallpaper.imageUrl ||
@@ -1379,6 +1393,8 @@ function createWallpaperCard(
             <p class="wallpaper-category">
                 ${category}
             </p>
+
+            ${creatorAttribution}
 
             <div class="card-buttons">
 
