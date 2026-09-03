@@ -1060,6 +1060,19 @@ img {
         13px;
 }
 
+.wallpaper-creator {
+    color: var(--saffron);
+    display: inline-block;
+    font-size: 13px;
+    margin: -4px 18px 14px;
+    text-decoration: none;
+}
+
+.wallpaper-creator:hover,
+.wallpaper-creator:focus-visible {
+    text-decoration: underline;
+}
+
 
 /* ==========================================
    CARD BUTTONS
