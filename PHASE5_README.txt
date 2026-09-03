@@ -1,3 +1,5 @@
+NOTE 2026-09-03: Creator channel creation is now instant self-service. Any older approval wording below is historical.
+
 BharatVarshOfficial - Phase 5 Account Foundation
 
 Purpose

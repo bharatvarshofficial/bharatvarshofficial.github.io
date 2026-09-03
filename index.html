@@ -11,12 +11,12 @@
     >
 
     <title>
-        BharatVarshOfficial | Premium Indian Wallpapers
+        BharatVarshOfficial | Indian Creator Platform
     </title>
 
     <meta
         name="description"
-        content="Download Premium Indian Wallpapers - Chhatrapati Shivaji Maharaj, Indian Army, Freedom Fighters, Temples, Festivals, Nature, Anime and More."
+        content="Discover and share Indian wallpapers, photography, digital art and videos. Create your own BharatVarshOfficial creator channel and grow your audience."
     >
 
     <meta
@@ -46,12 +46,12 @@
 
     <meta
         property="og:title"
-        content="BharatVarshOfficial | Premium Indian Wallpapers"
+        content="BharatVarshOfficial | Indian Creator Platform"
     >
 
     <meta
         property="og:description"
-        content="Discover premium Indian wallpapers celebrating our history, culture, heroes, temples, nature and festivals."
+        content="A creator platform for Indian wallpapers, photography, digital art and videos celebrating our history, culture, people and Bharat."
     >
 
     <meta
@@ -411,6 +411,10 @@
             Collections
         </a>
 
+        <a href="#creator-platform">
+            Creator Platform
+        </a>
+
         <a
             href="#login"
             id="navLoginLink"
@@ -584,11 +588,11 @@
 
             <h1>
 
-                WALLPAPERS THAT
+                CREATE • SHARE • DISCOVER
 
                 <br>
 
-                REFLECT OUR
+                THE STORIES OF
 
                 <span>
                     BHARAT
@@ -604,10 +608,9 @@
 
             <p>
 
-                Explore and download premium quality
-                wallpapers of Indian Warriors,
-                Temples, Army, Culture, Nature,
-                Festivals and more.
+                Discover wallpapers, photography, digital art and videos
+                from BharatVarshOfficial and independent creators. Create your
+                own channel, publish original work and grow toward monetization.
 
             </p>
 
@@ -618,15 +621,15 @@
                     href="#featured"
                     class="btn-primary"
                 >
-                    Explore Wallpapers
+                    Explore Creations
                 </a>
 
 
                 <a
-                    href="#device-fit"
+                    href="./profile.html#creator"
                     class="btn-secondary"
                 >
-                    Find My Wallpaper Size
+                    Start Creator Channel
                 </a>
 
             </div>
@@ -639,54 +642,46 @@
 
 
 <!-- ==================================================
-     DEVICE WALLPAPER ADVISOR
+     CREATOR PLATFORM
 ================================================== -->
-
-<section
-    class="device-advisor"
-    id="device-fit"
-    aria-labelledby="deviceAdvisorTitle"
->
-
-    <div class="device-advisor-icon" aria-hidden="true">
-        📱
+<section class="creator-platform-section" id="creator-platform">
+    <div class="creator-platform-heading">
+        <p class="eyebrow">BHARATVARSH CREATOR PLATFORM</p>
+        <h2>Create a channel. Share original work. Grow with Bharat.</h2>
+        <p>
+            BharatVarshOfficial supports creator channels for wallpapers,
+            photography, images, digital art and videos. Channel creation is
+            instant — no admin approval is required.
+        </p>
     </div>
 
-    <div class="device-advisor-copy">
-
-        <p class="eyebrow">
-            Smart size recommendation
-        </p>
-
-        <h2 id="deviceAdvisorTitle">
-            Best wallpaper size for your screen
-        </h2>
-
-        <p id="deviceAdvisorMessage">
-            Detecting your display resolution…
-        </p>
-
+    <div class="creator-platform-grid">
+        <article>
+            <span>🎨</span>
+            <h3>Instant Creator Channel</h3>
+            <p>Create your public channel and open Creator Studio immediately.</p>
+        </article>
+        <article>
+            <span>📷</span>
+            <h3>Photos &amp; Visual Art</h3>
+            <p>Publish original photography, wallpapers, images and digital artwork.</p>
+        </article>
+        <article>
+            <span>🎬</span>
+            <h3>Creator Videos</h3>
+            <p>Upload original video creations through the same secure creator workflow.</p>
+        </article>
+        <article>
+            <span>₹</span>
+            <h3>Creator Earnings</h3>
+            <p>Eligible creators can progress toward monetization, revenue share and payouts.</p>
+        </article>
     </div>
 
-    <dl class="device-advisor-facts">
-
-        <div>
-            <dt>Recommended</dt>
-            <dd id="deviceResolution">—</dd>
-        </div>
-
-        <div>
-            <dt>Orientation</dt>
-            <dd id="deviceOrientation">—</dd>
-        </div>
-
-        <div>
-            <dt>Aspect ratio</dt>
-            <dd id="deviceAspectRatio">—</dd>
-        </div>
-
-    </dl>
-
+    <div class="creator-platform-actions">
+        <a href="./profile.html#creator" class="btn-primary">Create Creator Channel</a>
+        <a href="./creator-studio.html" class="btn-secondary">Open Creator Studio</a>
+    </div>
 </section>
 
 
@@ -1330,17 +1325,7 @@
                     </strong>
                 </div>
 
-                <div>
-                    <span>Your screen</span>
-                    <strong id="wallpaperModalDevice">—</strong>
-                </div>
-
             </div>
-
-            <p
-                id="wallpaperModalFit"
-                class="wallpaper-fit-message"
-            ></p>
 
             <div class="wallpaper-dialog-actions">
 
@@ -1363,6 +1348,138 @@
             </div>
 
         </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- ==================================================
+     DOWNLOAD SIZE DIALOG
+================================================== -->
+
+<div
+    id="downloadSizeModal"
+    class="download-size-modal"
+    hidden
+>
+
+    <div
+        id="downloadSizeDialog"
+        class="download-size-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="downloadSizeTitle"
+        aria-describedby="downloadSizeSource downloadSizeMessage"
+        aria-busy="false"
+    >
+
+        <button
+            type="button"
+            id="downloadSizeClose"
+            class="download-size-close"
+            aria-label="Close download size selector"
+        >
+            ✕
+        </button>
+
+        <p class="download-size-eyebrow">
+            Choose wallpaper size
+        </p>
+
+        <h2 id="downloadSizeTitle">
+            Download Wallpaper
+        </h2>
+
+        <p
+            id="downloadSizeWallpaperTitle"
+            class="download-size-wallpaper-title"
+        ></p>
+
+        <p
+            id="downloadSizeSource"
+            class="download-size-source"
+        ></p>
+
+        <form id="downloadSizeForm">
+
+            <fieldset>
+
+                <legend>
+                    Select resolution
+                </legend>
+
+                <div
+                    id="downloadSizeOptions"
+                    class="download-size-options"
+                ></div>
+
+            </fieldset>
+
+            <div
+                id="downloadCustomFields"
+                class="download-custom-fields"
+                hidden
+            >
+
+                <label>
+                    Width (px)
+                    <input
+                        type="number"
+                        id="downloadCustomWidth"
+                        min="240"
+                        max="7680"
+                        step="1"
+                        inputmode="numeric"
+                        autocomplete="off"
+                    >
+                </label>
+
+                <span aria-hidden="true">×</span>
+
+                <label>
+                    Height (px)
+                    <input
+                        type="number"
+                        id="downloadCustomHeight"
+                        min="240"
+                        max="7680"
+                        step="1"
+                        inputmode="numeric"
+                        autocomplete="off"
+                    >
+                </label>
+
+            </div>
+
+            <p
+                id="downloadSizeMessage"
+                class="download-size-message"
+                aria-live="polite"
+            ></p>
+
+            <div class="download-size-actions">
+
+                <button
+                    type="button"
+                    id="downloadSizeCancel"
+                    class="download-size-cancel"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    id="downloadSizeConfirm"
+                    class="download-btn"
+                >
+                    Download
+                </button>
+
+            </div>
+
+        </form>
 
     </div>
 

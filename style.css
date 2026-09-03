@@ -3021,6 +3021,256 @@ body.modal-open {
     flex: 1.8;
 }
 
+.download-size-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10020;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(12px);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.download-size-modal[hidden] {
+    display: none;
+}
+
+.download-size-modal.open {
+    opacity: 1;
+}
+
+.download-size-dialog {
+    position: relative;
+    width: min(620px, 100%);
+    max-height: min(820px, 94vh);
+    padding: 30px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--card);
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.58);
+}
+
+.download-size-dialog[aria-busy="true"] {
+    cursor: wait;
+}
+
+.download-size-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--bg);
+    color: var(--white);
+    cursor: pointer;
+}
+
+.download-size-eyebrow {
+    margin: 0 52px 5px 0;
+    color: var(--orange);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.download-size-dialog h2 {
+    margin: 0 52px 5px 0;
+    font-size: clamp(24px, 5vw, 34px);
+}
+
+.download-size-wallpaper-title {
+    margin: 0;
+    color: var(--white);
+    font-weight: 700;
+}
+
+.download-size-source {
+    margin: 3px 0 20px;
+    color: var(--gray);
+    font-size: 12px;
+}
+
+.download-size-dialog fieldset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.download-size-dialog legend {
+    margin-bottom: 10px;
+    color: var(--gray);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.download-size-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.download-size-option {
+    position: relative;
+    display: flex;
+    min-height: 72px;
+    align-items: center;
+    gap: 11px;
+    padding: 13px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg);
+    cursor: pointer;
+    transition: border-color 0.2s ease,
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.download-size-option:hover {
+    border-color: var(--orange);
+    transform: translateY(-1px);
+}
+
+.download-size-option:has(input:checked) {
+    border-color: var(--orange);
+    background: rgba(255, 138, 0, 0.1);
+    box-shadow: 0 0 0 1px var(--orange);
+}
+
+.download-size-option input {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--orange);
+}
+
+.download-size-option-copy {
+    display: block;
+    min-width: 0;
+}
+
+.download-size-option-copy strong,
+.download-size-option-copy small {
+    display: block;
+}
+
+.download-size-option-copy strong {
+    color: var(--white);
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.download-size-option-copy small {
+    margin-top: 4px;
+    color: var(--gray);
+    font-size: 11px;
+}
+
+.recommended-badge {
+    display: inline-block;
+    margin-left: 5px;
+    padding: 3px 6px;
+    border-radius: 999px;
+    background: var(--orange);
+    color: #ffffff;
+    font-size: 8px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    vertical-align: 1px;
+}
+
+.download-custom-fields {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: end;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg);
+}
+
+.download-custom-fields[hidden] {
+    display: none;
+}
+
+.download-custom-fields label {
+    color: var(--gray);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.download-custom-fields input {
+    width: 100%;
+    margin-top: 6px;
+    padding: 11px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--white);
+}
+
+.download-custom-fields > span {
+    padding-bottom: 10px;
+    color: var(--gray);
+}
+
+.download-size-message {
+    min-height: 42px;
+    margin: 14px 0;
+    padding: 10px 12px;
+    border-left: 3px solid var(--green);
+    border-radius: 6px;
+    background: rgba(39, 201, 63, 0.08);
+    color: var(--gray);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.download-size-message[data-type="error"] {
+    border-left-color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+    color: #fca5a5;
+}
+
+.download-size-actions {
+    display: grid;
+    grid-template-columns: 0.75fr 1.25fr;
+    gap: 10px;
+}
+
+.download-size-actions .download-btn,
+.download-size-cancel {
+    min-height: 48px;
+    padding: 11px 15px;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 800;
+}
+
+.download-size-cancel {
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--white);
+}
+
+.download-size-actions .download-btn {
+    width: 100%;
+}
+
 @media (max-width: 1050px) {
     .device-advisor {
         grid-template-columns: auto minmax(0, 1fr);
@@ -3082,6 +3332,25 @@ body.modal-open {
     .wallpaper-dialog-actions {
         flex-direction: column;
     }
+
+    .download-size-modal {
+        place-items: end center;
+        padding: 10px;
+    }
+
+    .download-size-dialog {
+        max-height: 92vh;
+        padding: 25px 17px 18px;
+        border-radius: 20px 20px 14px 14px;
+    }
+
+    .download-size-options {
+        grid-template-columns: 1fr;
+    }
+
+    .download-size-option {
+        min-height: 64px;
+    }
 }
 
 @media (hover: none) {
@@ -3099,5 +3368,99 @@ body.modal-open {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================================
+   CREATOR PLATFORM HOME SECTION
+============================================================ */
+.creator-platform-section {
+    width: min(1180px, calc(100% - 32px));
+    margin: 34px auto 58px;
+    padding: clamp(26px, 5vw, 54px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 26px;
+    background:
+        radial-gradient(circle at 10% 10%, rgba(255, 138, 0, 0.16), transparent 35%),
+        radial-gradient(circle at 90% 80%, rgba(19, 136, 8, 0.15), transparent 34%),
+        rgba(12, 15, 22, 0.92);
+}
+
+.creator-platform-heading {
+    max-width: 820px;
+    margin-bottom: 28px;
+}
+
+.creator-platform-heading h2 {
+    margin: 7px 0 10px;
+    font-size: clamp(28px, 4vw, 46px);
+    line-height: 1.08;
+}
+
+.creator-platform-heading > p:last-child,
+.creator-platform-grid p {
+    color: var(--text-secondary, #b7bfcc);
+}
+
+.creator-platform-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.creator-platform-grid article {
+    padding: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.045);
+}
+
+.creator-platform-grid article > span {
+    display: inline-grid;
+    width: 46px;
+    height: 46px;
+    place-items: center;
+    margin-bottom: 14px;
+    border-radius: 13px;
+    background: rgba(255, 138, 0, 0.12);
+    font-size: 23px;
+}
+
+.creator-platform-grid h3 {
+    margin: 0 0 7px;
+}
+
+.creator-platform-grid p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.creator-platform-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 26px;
+}
+
+.creator-platform-actions a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 900px) {
+    .creator-platform-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 560px) {
+    .creator-platform-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .creator-platform-actions a {
+        width: 100%;
     }
 }

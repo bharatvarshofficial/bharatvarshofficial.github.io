@@ -54,7 +54,7 @@ test("creator media remains private until admin review", async () => {
     );
     assert.match(
         rules,
-        /isApprovedCreator\(request\.auth\.uid\)/
+        /isActiveCreator\(request\.auth\.uid\)/
     );
     assert.match(
         rules,
@@ -127,6 +127,7 @@ test("signature Worker verifies Firebase and protects Cloudinary secrets", async
         worker,
         /documents\/creators\//
     );
+    assert.match(worker, /active creator channel is required/i);
     assert.match(
         worker,
         /createCloudinarySignature\(/

@@ -9,7 +9,7 @@ Included
 --------
 1. Device-aware recommended wallpaper resolution, orientation and aspect ratio.
 2. Accessible wallpaper preview dialog with original image dimensions.
-3. Device-fit guidance, favourite action and original download action in preview.
+3. Wallpaper preview, favourite action and original download action. Smart device-size recommendation has been removed.
 4. Signed-in favourite/download metrics and a My Favourites shortcut.
 5. Honest live wallpaper, download and category statistics from Firestore data.
 6. Dead AI Wallpaper and disabled mobile-login controls removed.

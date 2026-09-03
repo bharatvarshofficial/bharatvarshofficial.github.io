@@ -58,6 +58,14 @@ import {
 } from "../../../cloudinary-uploader.js";
 
 
+import {
+    CREATOR_PROFIT_SHARE_RATE,
+    CREATOR_PROFIT_SHARE_PERCENT,
+    DEFAULT_MINIMUM_PAYOUT_INR,
+    calculateCreatorProfitShare
+} from "../../../creator-earnings-policy.js";
+
+
 // ==========================================
 // ADMIN UID
 // ==========================================
@@ -170,15 +178,6 @@ const imageCount =
 const videoCount =
     document.getElementById("videoCount");
 
-const creatorApplicationCount =
-    document.getElementById(
-        "creatorApplicationCount"
-    );
-
-const creatorApplicationsList =
-    document.getElementById(
-        "creatorApplicationsList"
-    );
 
 const creatorMediaSubmissionCount =
     document.getElementById(
@@ -189,6 +188,30 @@ const creatorMediaSubmissionsList =
     document.getElementById(
         "creatorMediaSubmissionsList"
     );
+
+const creatorEarningsForm =
+    document.getElementById("creatorEarningsForm");
+
+const earningsCreatorUid =
+    document.getElementById("earningsCreatorUid");
+
+const earningsMonetizationStatus =
+    document.getElementById("earningsMonetizationStatus");
+
+const earningsAttributedProfit =
+    document.getElementById("earningsAttributedProfit");
+
+const earningsSharePreview =
+    document.getElementById("earningsSharePreview");
+
+const creatorEarningsSaveBtn =
+    document.getElementById("creatorEarningsSaveBtn");
+
+const creatorPayoutCount =
+    document.getElementById("creatorPayoutCount");
+
+const creatorPayoutRequestsList =
+    document.getElementById("creatorPayoutRequestsList");
 
 
 // ==========================================
@@ -1136,9 +1159,9 @@ async function loadDashboard() {
 
     await loadCounts();
 
-    await loadCreatorApplications();
-
     await loadCreatorMediaSubmissions();
+
+    await loadCreatorPayoutRequests();
 
     await loadRecentMedia();
 
@@ -1146,500 +1169,310 @@ async function loadDashboard() {
 
 
 // ==========================================
-// CREATOR VERIFICATION QUEUE
+// CREATOR EARNINGS + PAYOUT OPERATIONS
 // ==========================================
 
-function getApplicationTime(application) {
-
-    return application.submittedAt?.seconds ||
-        application.updatedAt?.seconds ||
-        0;
-
+function formatAdminINR(value) {
+    return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 2
+    }).format(Math.max(0, Number(value) || 0));
 }
 
-
-function appendApplicationDetail(
-    container,
-    label,
-    value
-) {
-
-    const detail =
-        document.createElement("p");
-
-    const labelElement =
-        document.createElement("strong");
-
-    labelElement.textContent = `${label}: `;
-    detail.append(labelElement, value || "Not provided");
-    container.append(detail);
-
+function updateCreatorSharePreview() {
+    if (!earningsSharePreview) return;
+    const attributedProfit = Math.max(0, Number(earningsAttributedProfit?.value) || 0);
+    const creatorShare = calculateCreatorProfitShare(attributedProfit);
+    earningsSharePreview.textContent =
+        `Creator share (${CREATOR_PROFIT_SHARE_PERCENT}%): ${formatAdminINR(creatorShare)}`;
 }
 
+async function saveCreatorEarnings(event) {
+    event.preventDefault();
 
-function createCreatorApplicationCard(application) {
+    const creatorId = earningsCreatorUid?.value.trim() || "";
+    const monetizationStatus = earningsMonetizationStatus?.value || "not_eligible";
+    const attributedProfit = Math.max(0, Number(earningsAttributedProfit?.value) || 0);
+    const creatorShare = calculateCreatorProfitShare(attributedProfit);
 
-    const card =
-        document.createElement("article");
-
-    card.className =
-        "creator-application-card";
-
-    card.dataset.applicationUid =
-        application.uid;
-
-
-    const heading =
-        document.createElement("div");
-
-    heading.className =
-        "creator-application-heading";
-
-
-    const identity =
-        document.createElement("div");
-
-    const title =
-        document.createElement("h3");
-
-    title.textContent =
-        application.channelName ||
-        "Unnamed creator";
-
-    const handle =
-        document.createElement("span");
-
-    handle.textContent =
-        `@${application.channelHandle || "unknown"}`;
-
-    identity.append(title, handle);
-
-
-    const badge =
-        document.createElement("span");
-
-    badge.className =
-        "creator-queue-badge";
-
-    badge.textContent =
-        "Pending review";
-
-    heading.append(identity, badge);
-
-
-    const details =
-        document.createElement("div");
-
-    details.className =
-        "creator-application-details";
-
-    appendApplicationDetail(
-        details,
-        "Category",
-        application.category
-    );
-
-    appendApplicationDetail(
-        details,
-        "Description",
-        application.bio
-    );
-
-
-    if (
-        application.website &&
-        isValidPublicURL(application.website)
-    ) {
-
-        const websiteLine =
-            document.createElement("p");
-
-        const websiteLabel =
-            document.createElement("strong");
-
-        const websiteLink =
-            document.createElement("a");
-
-        websiteLabel.textContent =
-            "Website: ";
-
-        websiteLink.href =
-            application.website;
-
-        websiteLink.textContent =
-            application.website;
-
-        websiteLink.target = "_blank";
-        websiteLink.rel = "noopener noreferrer";
-
-        websiteLine.append(
-            websiteLabel,
-            websiteLink
-        );
-
-        details.append(websiteLine);
-
+    if (attributedProfit > 0 && monetizationStatus !== "monetized") {
+        showStatus("❌ Set monetization status to Monetized before crediting creator profit share.", "error");
+        return;
     }
 
+    if (!creatorId || !creatorEarningsSaveBtn) return;
 
-    const declaration =
-        document.createElement("p");
-
-    declaration.className =
-        "creator-rights-status";
-
-    declaration.textContent =
-        application.rightsConfirmed
-            ? "✓ Content-rights declaration confirmed"
-            : "⚠ Content-rights declaration missing";
-
-
-    const actions =
-        document.createElement("div");
-
-    actions.className =
-        "creator-application-actions";
-
-    const approveButton =
-        document.createElement("button");
-
-    approveButton.type = "button";
-    approveButton.className =
-        "creator-review-action approve-creator";
-    approveButton.dataset.creatorAction =
-        "approve";
-    approveButton.textContent =
-        "✓ Approve creator";
-
-
-    const rejectButton =
-        document.createElement("button");
-
-    rejectButton.type = "button";
-    rejectButton.className =
-        "creator-review-action reject-creator";
-    rejectButton.dataset.creatorAction =
-        "reject";
-    rejectButton.textContent =
-        "Request changes";
-
-    actions.append(
-        approveButton,
-        rejectButton
-    );
-
-    card.append(
-        heading,
-        details,
-        declaration,
-        actions
-    );
-
-    return card;
-
-}
-
-
-async function loadCreatorApplications() {
-
-    if (
-        !creatorApplicationsList ||
-        !creatorApplicationCount
-    ) return;
-
-    creatorApplicationsList.innerHTML =
-        '<div class="empty-state">Loading creator applications…</div>';
-
+    creatorEarningsSaveBtn.disabled = true;
+    creatorEarningsSaveBtn.textContent = "Saving…";
 
     try {
+        const creatorReference = doc(db, "creators", creatorId);
+        const earningsReference = doc(db, "creatorEarnings", creatorId);
+        const [creatorSnapshot, earningsSnapshot] = await Promise.all([
+            getDoc(creatorReference),
+            getDoc(earningsReference)
+        ]);
 
-        const snapshot =
-            await getDocs(
-                collection(
-                    db,
-                    "creatorApplications"
-                )
-            );
-
-        const applications =
-            snapshot.docs
-                .map((applicationDoc) => ({
-                    id: applicationDoc.id,
-                    ...applicationDoc.data()
-                }))
-                .filter(
-                    (application) =>
-                        application.status ===
-                            "pending"
-                )
-                .sort(
-                    (a, b) =>
-                        getApplicationTime(b) -
-                        getApplicationTime(a)
-                );
-
-
-        creatorApplicationCount.textContent =
-            `${applications.length} pending`;
-
-        creatorApplicationCount.classList.toggle(
-            "connection-on",
-            applications.length === 0
-        );
-
-        creatorApplicationCount.classList.toggle(
-            "connection-off",
-            applications.length > 0
-        );
-
-
-        creatorApplicationsList.replaceChildren();
-
-
-        if (!applications.length) {
-
-            const emptyState =
-                document.createElement("div");
-
-            emptyState.className =
-                "empty-state";
-
-            emptyState.textContent =
-                "No creator applications are waiting for review.";
-
-            creatorApplicationsList.append(
-                emptyState
-            );
-
-            return;
-
+        if (
+            !creatorSnapshot.exists() ||
+            !["active", "approved"].includes(creatorSnapshot.data().status)
+        ) {
+            throw new Error("Active creator channel not found for this UID.");
         }
 
+        const batch = writeBatch(db);
 
-        applications.forEach(
-            (application) => {
-                creatorApplicationsList.append(
-                    createCreatorApplicationCard(
-                        application
-                    )
-                );
+        if (earningsSnapshot.exists()) {
+            const update = {
+                monetizationStatus,
+                updatedAt: serverTimestamp()
+            };
+
+            update.profitShareRate = CREATOR_PROFIT_SHARE_RATE;
+
+            if (attributedProfit > 0) {
+                update.attributedPlatformProfit = increment(attributedProfit);
+                // Legacy field is retained as cumulative creator-share value.
+                update.eligibleRevenue = increment(creatorShare);
+                update.estimatedEarnings = increment(creatorShare);
+                update.availableBalance = increment(creatorShare);
+                update.lifetimeEarnings = increment(creatorShare);
             }
+
+            batch.set(earningsReference, update, { merge: true });
+        } else {
+            batch.set(earningsReference, {
+                creatorId,
+                currency: "INR",
+                monetizationStatus,
+                eligibleRevenue: creatorShare,
+                attributedPlatformProfit: attributedProfit,
+                profitShareRate: CREATOR_PROFIT_SHARE_RATE,
+                estimatedEarnings: creatorShare,
+                availableBalance: creatorShare,
+                lifetimeEarnings: creatorShare,
+                paidOut: 0,
+                minimumPayout: DEFAULT_MINIMUM_PAYOUT_INR,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+        }
+
+        if (attributedProfit > 0) {
+            const transactionReference = doc(
+                collection(db, "creatorEarningTransactions")
+            );
+
+            batch.set(transactionReference, {
+                creatorId,
+                type: "profit_share_credit",
+                source: "creator_attributed_verified_net_profit",
+                attributedPlatformProfit: attributedProfit,
+                profitShareRate: CREATOR_PROFIT_SHARE_RATE,
+                amount: creatorShare,
+                currency: "INR",
+                createdAt: serverTimestamp()
+            });
+        }
+
+        await batch.commit();
+
+        showStatus(
+            attributedProfit > 0
+                ? `✅ Verified profit ${formatAdminINR(attributedProfit)} settled. Creator gets ${CREATOR_PROFIT_SHARE_PERCENT}% = ${formatAdminINR(creatorShare)}.`
+                : "✅ Creator monetization status updated.",
+            "success"
         );
 
+        earningsAttributedProfit.value = "0";
+        updateCreatorSharePreview();
     } catch (error) {
-
-        console.error(
-            "Creator application load error:",
-            error
-        );
-
-        creatorApplicationCount.textContent =
-            "Unavailable";
-
-        creatorApplicationsList.innerHTML =
-            '<div class="empty-state">Creator applications could not be loaded. Deploy the latest Firestore rules and refresh.</div>';
-
+        console.error("Creator earnings update error:", error);
+        showStatus(`❌ ${error.message}`, "error");
+    } finally {
+        creatorEarningsSaveBtn.disabled = false;
+        creatorEarningsSaveBtn.textContent = "Save monetization update";
     }
-
 }
 
+function createPayoutRequestCard(request) {
+    const card = document.createElement("article");
+    card.className = "creator-payout-card";
 
-async function reviewCreatorApplication(
-    uid,
-    action,
-    button
-) {
+    const info = document.createElement("div");
+    const title = document.createElement("h3");
+    const details = document.createElement("p");
 
-    const applicationReference =
-        doc(
-            db,
-            "creatorApplications",
-            uid
-        );
+    title.textContent = `Creator ${request.creatorId}`;
+    details.textContent = `${formatAdminINR(request.amount)} · ${request.status || "pending"}`;
+    info.append(title, details);
 
-    const isApproval =
-        action === "approve";
+    const actions = document.createElement("div");
+    actions.className = "creator-payout-actions";
 
-    let reviewNote = "";
+    const paidButton = document.createElement("button");
+    paidButton.type = "button";
+    paidButton.dataset.payoutAction = "paid";
+    paidButton.dataset.creatorId = request.creatorId;
+    paidButton.textContent = "✓ Mark paid";
 
+    const rejectButton = document.createElement("button");
+    rejectButton.type = "button";
+    rejectButton.dataset.payoutAction = "rejected";
+    rejectButton.dataset.creatorId = request.creatorId;
+    rejectButton.textContent = "Reject";
 
-    if (isApproval) {
+    actions.append(paidButton, rejectButton);
+    card.append(info, actions);
+    return card;
+}
 
-        const confirmed = window.confirm(
-            "Approve this creator channel? Creator Studio access will become eligible."
-        );
+async function loadCreatorPayoutRequests() {
+    if (!creatorPayoutRequestsList || !creatorPayoutCount) return;
 
-        if (!confirmed) return;
+    creatorPayoutRequestsList.innerHTML =
+        '<div class="empty-state">Loading payout requests…</div>';
 
-    } else {
+    try {
+        const snapshot = await getDocs(collection(db, "payoutRequests"));
+        const requests = snapshot.docs
+            .map((entry) => ({ id: entry.id, ...entry.data() }))
+            .filter((entry) => entry.status === "pending")
+            .sort((left, right) =>
+                (right.requestedAt?.seconds || 0) -
+                (left.requestedAt?.seconds || 0)
+            );
 
-        reviewNote = window.prompt(
-            "Tell the creator what must be changed:",
-            "Please update your channel information and resubmit."
-        )?.trim() || "";
+        creatorPayoutCount.textContent = `${requests.length} pending payouts`;
+        creatorPayoutCount.classList.toggle("connection-on", requests.length > 0);
+        creatorPayoutCount.classList.toggle("connection-off", requests.length === 0);
+        creatorPayoutRequestsList.replaceChildren();
 
-        if (!reviewNote) return;
+        if (!requests.length) {
+            const empty = document.createElement("div");
+            empty.className = "empty-state";
+            empty.textContent = "No creator payout requests are pending.";
+            creatorPayoutRequestsList.append(empty);
+            return;
+        }
 
+        requests.forEach((request) => {
+            creatorPayoutRequestsList.append(createPayoutRequestCard(request));
+        });
+    } catch (error) {
+        console.error("Creator payout load error:", error);
+        creatorPayoutCount.textContent = "Unavailable";
+        creatorPayoutRequestsList.innerHTML =
+            '<div class="empty-state">Payout requests could not be loaded.</div>';
     }
+}
 
+async function reviewCreatorPayout(creatorId, action, button) {
+    if (!creatorId || !["paid", "rejected"].includes(action)) return;
+
+    const confirmed = window.confirm(
+        action === "paid"
+            ? "Mark this payout as paid after the real payment has been completed?"
+            : "Reject this payout request?"
+    );
+    if (!confirmed) return;
 
     button.disabled = true;
-    button.textContent =
-        isApproval
-            ? "Approving…"
-            : "Saving…";
-
 
     try {
+        const payoutReference = doc(db, "payoutRequests", creatorId);
+        const earningsReference = doc(db, "creatorEarnings", creatorId);
+        const [payoutSnapshot, earningsSnapshot] = await Promise.all([
+            getDoc(payoutReference),
+            getDoc(earningsReference)
+        ]);
 
-        const applicationDocument =
-            await getDoc(
-                applicationReference
-            );
-
-
-        if (!applicationDocument.exists()) {
-            throw new Error(
-                "Creator application no longer exists."
-            );
+        if (!payoutSnapshot.exists() || payoutSnapshot.data().status !== "pending") {
+            throw new Error("This payout request is no longer pending.");
         }
 
+        const amount = Math.max(0, Number(payoutSnapshot.data().amount) || 0);
+        const batch = writeBatch(db);
 
-        const application =
-            applicationDocument.data();
-
-        if (application.status !== "pending") {
-            throw new Error(
-                "This application has already been reviewed."
-            );
-        }
-
-
-        const status =
-            isApproval
-                ? "approved"
-                : "rejected";
-
-        const reviewBatch =
-            writeBatch(db);
-
-        reviewBatch.update(
-            applicationReference,
-            {
-                status,
-                reviewNote,
-                reviewedAt:
-                    serverTimestamp(),
-                reviewedBy:
-                    ADMIN_UID,
-                updatedAt:
-                    serverTimestamp()
+        if (action === "paid") {
+            if (!earningsSnapshot.exists()) {
+                throw new Error("Creator earnings record is missing.");
             }
-        );
 
+            const available = Math.max(
+                0,
+                Number(earningsSnapshot.data().availableBalance) || 0
+            );
 
-        reviewBatch.set(
-            doc(db, "users", uid),
+            if (amount <= 0 || amount > available) {
+                throw new Error("Payout amount is greater than the verified available balance.");
+            }
+
+            batch.set(
+                earningsReference,
+                {
+                    availableBalance: increment(-amount),
+                    paidOut: increment(amount),
+                    updatedAt: serverTimestamp()
+                },
+                { merge: true }
+            );
+        }
+
+        if (action === "paid") {
+            const transactionReference = doc(
+                collection(db, "creatorEarningTransactions")
+            );
+
+            batch.set(transactionReference, {
+                creatorId,
+                type: "payout",
+                source: "creator_payout",
+                amount,
+                currency: "INR",
+                createdAt: serverTimestamp()
+            });
+        }
+
+        batch.set(
+            payoutReference,
             {
-                creatorStatus: status,
-                updatedAt:
-                    serverTimestamp()
+                status: action,
+                updatedAt: serverTimestamp()
             },
             { merge: true }
         );
 
-
-        if (isApproval) {
-
-            reviewBatch.set(
-                doc(db, "creators", uid),
-                {
-                    uid,
-                    channelName:
-                        application.channelName,
-                    channelHandle:
-                        application.channelHandle,
-                    category:
-                        application.category,
-                    website:
-                        application.website || "",
-                    bio:
-                        application.bio,
-                    status:
-                        "approved",
-                    followers: 0,
-                    uploads: 0,
-                    approvedAt:
-                        serverTimestamp(),
-                    updatedAt:
-                        serverTimestamp()
-                },
-                { merge: true }
-            );
-
-        }
-
-
-        await reviewBatch.commit();
-
-
+        await batch.commit();
         showStatus(
-            isApproval
-                ? "✅ Creator approved. Public creator record created."
-                : "✅ Changes requested. The creator can edit and resubmit.",
+            action === "paid"
+                ? `✅ ${formatAdminINR(amount)} payout marked paid.`
+                : "✅ Payout request rejected.",
             "success"
         );
-
-        await loadCreatorApplications();
-
+        await loadCreatorPayoutRequests();
     } catch (error) {
-
-        console.error(
-            "Creator review error:",
-            error
-        );
-
-        showStatus(
-            `❌ ${error.message}`,
-            "error"
-        );
-
+        console.error("Creator payout review error:", error);
+        showStatus(`❌ ${error.message}`, "error");
         button.disabled = false;
-        button.textContent =
-            isApproval
-                ? "✓ Approve creator"
-                : "Request changes";
-
     }
-
 }
 
+creatorEarningsForm?.addEventListener("submit", saveCreatorEarnings);
+earningsAttributedProfit?.addEventListener("input", updateCreatorSharePreview);
+updateCreatorSharePreview();
 
-creatorApplicationsList?.addEventListener(
-    "click",
-    (event) => {
+creatorPayoutRequestsList?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-payout-action]");
+    if (!button) return;
 
-        const button =
-            event.target.closest(
-                "[data-creator-action]"
-            );
-
-        const card =
-            button?.closest(
-                "[data-application-uid]"
-            );
-
-        if (!button || !card) return;
-
-        reviewCreatorApplication(
-            card.dataset.applicationUid,
-            button.dataset.creatorAction,
-            button
-        );
-
-    }
-);
-
+    reviewCreatorPayout(
+        button.dataset.creatorId,
+        button.dataset.payoutAction,
+        button
+    );
+});
 
 // ==========================================
 // CREATOR MEDIA REVIEW QUEUE
@@ -1954,10 +1787,12 @@ async function reviewCreatorMedia(
 
         if (
             !creatorDocument.exists() ||
-            creatorDocument.data().status !== "approved"
+            !["active", "approved"].includes(
+                creatorDocument.data().status
+            )
         ) {
             throw new Error(
-                "The creator is no longer approved."
+                "The creator channel is no longer active."
             );
         }
 

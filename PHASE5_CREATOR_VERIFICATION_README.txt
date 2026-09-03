@@ -1,3 +1,5 @@
+NOTE 2026-09-03: Creator channel verification/approval has been retired. New channels activate instantly. This file describes the legacy Phase 5 flow only.
+
 BharatVarshOfficial — Phase 5 Creator Verification Update
 =========================================================
 

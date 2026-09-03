@@ -1,3 +1,5 @@
+NOTE 2026-09-03: Do not approve creator channels. Channels activate instantly; admin reviews creator media and handles trusted monetization/payout operations.
+
 BharatVarshOfficial — Secure Google Admin Login
 ================================================
 

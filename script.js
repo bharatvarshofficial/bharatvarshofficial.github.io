@@ -1,6 +1,6 @@
 // ============================================================
 // BharatVarshOfficial
-// Premium Indian Wallpapers
+// Indian Creator Platform
 // script.js - COMPLETE UPDATED VERSION
 // ============================================================
 
@@ -41,10 +41,14 @@ import {
     mergeCategoryLabels
 } from "./categories.js";
 
+
 import {
-    getDeviceRecommendation,
-    getWallpaperFitMessage
-} from "./device-utils.js";
+    buildCloudinaryExactSizeURL,
+    getDownloadSizeOptions,
+    getExtensionForMimeType,
+    getWallpaperDimensions,
+    validateDownloadDimensions
+} from "./download-utils.js";
 
 
 // ============================================================
@@ -69,7 +73,11 @@ const STATE = {
 
     activeWallpaperId: null,
 
-    deviceRecommendation: null,
+    pendingDownloadWallpaperId: null,
+
+    downloadInProgressId: null,
+
+    downloadDialogLastFocusedElement: null,
 
     lastFocusedElement: null,
 
@@ -412,25 +420,6 @@ function cacheDOM() {
             "#showFavouritesButton"
         );
 
-    DOM.deviceResolution =
-        document.querySelector(
-            "#deviceResolution"
-        );
-
-    DOM.deviceOrientation =
-        document.querySelector(
-            "#deviceOrientation"
-        );
-
-    DOM.deviceAspectRatio =
-        document.querySelector(
-            "#deviceAspectRatio"
-        );
-
-    DOM.deviceAdvisorMessage =
-        document.querySelector(
-            "#deviceAdvisorMessage"
-        );
 
     DOM.statWallpaperCount =
         document.querySelector(
@@ -482,15 +471,6 @@ function cacheDOM() {
             "#wallpaperModalResolution"
         );
 
-    DOM.wallpaperModalDevice =
-        document.querySelector(
-            "#wallpaperModalDevice"
-        );
-
-    DOM.wallpaperModalFit =
-        document.querySelector(
-            "#wallpaperModalFit"
-        );
 
     DOM.wallpaperModalFavourite =
         document.querySelector(
@@ -500,6 +480,71 @@ function cacheDOM() {
     DOM.wallpaperModalDownload =
         document.querySelector(
             "#wallpaperModalDownload"
+        );
+
+    DOM.downloadSizeModal =
+        document.querySelector(
+            "#downloadSizeModal"
+        );
+
+    DOM.downloadSizeDialog =
+        document.querySelector(
+            "#downloadSizeDialog"
+        );
+
+    DOM.downloadSizeClose =
+        document.querySelector(
+            "#downloadSizeClose"
+        );
+
+    DOM.downloadSizeCancel =
+        document.querySelector(
+            "#downloadSizeCancel"
+        );
+
+    DOM.downloadSizeForm =
+        document.querySelector(
+            "#downloadSizeForm"
+        );
+
+    DOM.downloadSizeWallpaperTitle =
+        document.querySelector(
+            "#downloadSizeWallpaperTitle"
+        );
+
+    DOM.downloadSizeSource =
+        document.querySelector(
+            "#downloadSizeSource"
+        );
+
+    DOM.downloadSizeOptions =
+        document.querySelector(
+            "#downloadSizeOptions"
+        );
+
+    DOM.downloadCustomFields =
+        document.querySelector(
+            "#downloadCustomFields"
+        );
+
+    DOM.downloadCustomWidth =
+        document.querySelector(
+            "#downloadCustomWidth"
+        );
+
+    DOM.downloadCustomHeight =
+        document.querySelector(
+            "#downloadCustomHeight"
+        );
+
+    DOM.downloadSizeMessage =
+        document.querySelector(
+            "#downloadSizeMessage"
+        );
+
+    DOM.downloadSizeConfirm =
+        document.querySelector(
+            "#downloadSizeConfirm"
         );
 
 }
@@ -514,8 +559,6 @@ function initializeWebsite() {
     updateCopyrightYear();
 
     updatePageTitle();
-
-    updateDeviceAdvisor();
 
     updateSiteStats();
 
@@ -1468,8 +1511,9 @@ function handleWallpaperGridClick(
 
     if (action === "download") {
 
-        downloadWallpaper(
-            wallpaperId
+        openDownloadSizeDialog(
+            wallpaperId,
+            button
         );
 
     }
@@ -1487,12 +1531,719 @@ function handleWallpaperGridClick(
 
 
 // ============================================================
-// 6. DOWNLOAD SYSTEM
+// 6. DOWNLOAD SIZE SELECTOR
+// ============================================================
+
+function getRenderedWallpaperDimensions(
+    wallpaperId
+) {
+
+    if (
+        wallpaperId === STATE.activeWallpaperId &&
+        DOM.wallpaperModalImage?.complete
+    ) {
+
+        const width =
+            DOM.wallpaperModalImage.naturalWidth;
+
+        const height =
+            DOM.wallpaperModalImage.naturalHeight;
+
+        if (width && height) {
+
+            return {
+                width,
+                height
+            };
+
+        }
+
+    }
+
+    const card = Array.from(
+        document.querySelectorAll(
+            ".wallpaper-card"
+        )
+    ).find(
+        item => item.dataset.id === wallpaperId
+    );
+
+    const image = card?.querySelector(
+        ".wallpaper-image"
+    );
+
+    return {
+        width: image?.naturalWidth || 0,
+        height: image?.naturalHeight || 0
+    };
+
+}
+
+
+function getDownloadWallpaperWithDimensions(
+    wallpaper
+) {
+
+    const storedDimensions =
+        getWallpaperDimensions(
+            wallpaper
+        );
+
+    const renderedDimensions =
+        getRenderedWallpaperDimensions(
+            wallpaper.id
+        );
+
+    return {
+        ...wallpaper,
+        width:
+            renderedDimensions.width ||
+            storedDimensions.width,
+        height:
+            renderedDimensions.height ||
+            storedDimensions.height
+    };
+
+}
+
+
+function formatDownloadSize(
+    width,
+    height
+) {
+
+    return `${width} × ${height} px`;
+
+}
+
+
+function renderDownloadSizeOptions(
+    wallpaper
+) {
+
+    if (!DOM.downloadSizeOptions) return;
+
+    const options =
+        getDownloadSizeOptions({ wallpaper });
+
+    DOM.downloadSizeOptions.innerHTML =
+        options.map(
+            (option, index) => {
+
+                const detail = option.original
+                    ? (option.width && option.height
+                        ? formatDownloadSize(
+                            option.width,
+                            option.height
+                        )
+                        : "Highest available quality")
+                    : (option.custom
+                        ? "Enter your own width and height"
+                        : formatDownloadSize(
+                            option.width,
+                            option.height
+                        ));
+
+                return `
+                    <label class="download-size-option">
+                        <input
+                            type="radio"
+                            name="downloadSize"
+                            value="${escapeAttribute(option.id)}"
+                            data-width="${option.width || ""}"
+                            data-height="${option.height || ""}"
+                            data-original="${option.original ? "true" : "false"}"
+                            data-custom="${option.custom ? "true" : "false"}"
+                            ${index === 0 ? "checked" : ""}
+                        >
+                        <span class="download-size-option-copy">
+                            <strong>
+                                ${escapeHTML(option.label)}
+                            </strong>
+                            <small>${escapeHTML(detail)}</small>
+                        </span>
+                    </label>
+                `;
+
+            }
+        ).join("");
+
+    updateDownloadSizeSelection();
+
+}
+
+
+function getSelectedDownloadSize() {
+
+    const selected =
+        DOM.downloadSizeForm?.querySelector(
+            'input[name="downloadSize"]:checked'
+        );
+
+    if (!selected) {
+
+        return {
+            valid: false,
+            message: "Download size select करा."
+        };
+
+    }
+
+    if (selected.dataset.original === "true") {
+
+        return {
+            valid: true,
+            id: selected.value,
+            original: true,
+            width: 0,
+            height: 0
+        };
+
+    }
+
+    const isCustom =
+        selected.dataset.custom === "true";
+
+    const width = isCustom
+        ? DOM.downloadCustomWidth?.value
+        : selected.dataset.width;
+
+    const height = isCustom
+        ? DOM.downloadCustomHeight?.value
+        : selected.dataset.height;
+
+    const dimensions =
+        validateDownloadDimensions(
+            width,
+            height
+        );
+
+    return {
+        ...dimensions,
+        id: selected.value,
+        original: false,
+        custom: isCustom
+    };
+
+}
+
+
+function updateDownloadSizeSelection() {
+
+    const selection =
+        getSelectedDownloadSize();
+
+    const selected =
+        DOM.downloadSizeForm?.querySelector(
+            'input[name="downloadSize"]:checked'
+        );
+
+    const isCustom =
+        selected?.dataset.custom === "true";
+
+    if (DOM.downloadCustomFields) {
+
+        DOM.downloadCustomFields.hidden =
+            !isCustom;
+
+    }
+
+    if (!DOM.downloadSizeMessage) return;
+
+    if (!selection.valid) {
+
+        DOM.downloadSizeMessage.textContent =
+            selection.message;
+
+        DOM.downloadSizeMessage.dataset.type =
+            "error";
+
+        return;
+
+    }
+
+    DOM.downloadSizeMessage.dataset.type = "info";
+
+    if (selection.original) {
+
+        DOM.downloadSizeMessage.textContent =
+            "Original file कोणताही crop किंवा resize न करता download होईल.";
+
+        if (DOM.downloadSizeConfirm) {
+
+            DOM.downloadSizeConfirm.textContent =
+                "Download Original";
+
+        }
+
+        return;
+
+    }
+
+    const wallpaper =
+        STATE.wallpapers.find(
+            item =>
+                item.id ===
+                STATE.pendingDownloadWallpaperId
+        );
+
+    const source = wallpaper
+        ? getWallpaperDimensions(
+            getDownloadWallpaperWithDimensions(
+                wallpaper
+            )
+        )
+        : {
+            width: 0,
+            height: 0
+        };
+
+    const willUpscale =
+        source.width &&
+        source.height &&
+        (
+            selection.width > source.width ||
+            selection.height > source.height
+        );
+
+    DOM.downloadSizeMessage.textContent = willUpscale
+        ? "Exact size तयार होईल; original image लहान असल्यामुळे थोडी softness दिसू शकते."
+        : "Image stretch होणार नाही; exact sizeसाठी smart centre crop वापरला जाईल.";
+
+    if (DOM.downloadSizeConfirm) {
+
+        DOM.downloadSizeConfirm.textContent =
+            `Download ${selection.width} × ${selection.height}`;
+
+    }
+
+}
+
+
+function openDownloadSizeDialog(
+    wallpaperId,
+    triggerElement = null
+) {
+
+    const wallpaper =
+        STATE.wallpapers.find(
+            item => item.id === wallpaperId
+        );
+
+    if (!wallpaper || !DOM.downloadSizeModal) {
+
+        showToast(
+            "Wallpaper download options उपलब्ध नाहीत.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    STATE.pendingDownloadWallpaperId =
+        wallpaperId;
+
+    STATE.downloadDialogLastFocusedElement =
+        triggerElement || document.activeElement;
+
+    const wallpaperWithDimensions =
+        getDownloadWallpaperWithDimensions(
+            wallpaper
+        );
+
+    const source =
+        getWallpaperDimensions(
+            wallpaperWithDimensions
+        );
+
+    if (DOM.downloadSizeWallpaperTitle) {
+
+        DOM.downloadSizeWallpaperTitle.textContent =
+            wallpaper.title ||
+            wallpaper.name ||
+            "Indian Wallpaper";
+
+    }
+
+    if (DOM.downloadSizeSource) {
+
+        DOM.downloadSizeSource.textContent =
+            source.width && source.height
+                ? `Original: ${formatDownloadSize(source.width, source.height)}`
+                : "Original size image load झाल्यावर ओळखली जाईल.";
+
+    }
+
+    if (DOM.downloadCustomWidth) {
+
+        DOM.downloadCustomWidth.value =
+            source.width ||
+            1080;
+
+    }
+
+    if (DOM.downloadCustomHeight) {
+
+        DOM.downloadCustomHeight.value =
+            source.height ||
+            1920;
+
+    }
+
+    renderDownloadSizeOptions(
+        wallpaperWithDimensions
+    );
+
+    DOM.downloadSizeModal.hidden = false;
+    DOM.downloadSizeModal.classList.add("open");
+    document.body.classList.add("modal-open");
+
+    requestAnimationFrame(
+        () => DOM.downloadSizeForm
+            ?.querySelector(
+                'input[name="downloadSize"]:checked'
+            )
+            ?.focus()
+    );
+
+}
+
+
+function closeDownloadSizeDialog() {
+
+    if (!DOM.downloadSizeModal) return;
+
+    DOM.downloadSizeModal.classList.remove("open");
+    DOM.downloadSizeModal.hidden = true;
+
+    if (
+        !DOM.loginModal?.classList.contains("active") &&
+        !DOM.wallpaperModal?.classList.contains("open")
+    ) {
+
+        document.body.classList.remove("modal-open");
+
+    }
+
+    STATE.pendingDownloadWallpaperId = null;
+
+    if (
+        STATE.downloadDialogLastFocusedElement &&
+        document.contains(
+            STATE.downloadDialogLastFocusedElement
+        )
+    ) {
+
+        STATE.downloadDialogLastFocusedElement.focus();
+
+    }
+
+    STATE.downloadDialogLastFocusedElement = null;
+
+}
+
+
+function setDownloadDialogBusy(
+    isBusy
+) {
+
+    DOM.downloadSizeDialog?.setAttribute(
+        "aria-busy",
+        isBusy ? "true" : "false"
+    );
+
+    DOM.downloadSizeForm
+        ?.querySelectorAll(
+            "button, input"
+        )
+        .forEach(
+            element => {
+                element.disabled = isBusy;
+            }
+        );
+
+    if (DOM.downloadSizeClose) {
+
+        DOM.downloadSizeClose.disabled =
+            isBusy;
+
+    }
+
+    if (DOM.downloadSizeConfirm && isBusy) {
+
+        DOM.downloadSizeConfirm.textContent =
+            "Preparing download…";
+
+    }
+
+}
+
+
+async function fetchImageBlob(
+    imageURL
+) {
+
+    const response = await fetch(
+        imageURL,
+        {
+            mode: "cors",
+            credentials: "omit"
+        }
+    );
+
+    if (!response.ok) {
+
+        throw new Error(
+            `Image request failed (${response.status}).`
+        );
+
+    }
+
+    const blob = await response.blob();
+
+    if (!blob.type.startsWith("image/")) {
+
+        throw new Error(
+            "Selected file is not a supported image."
+        );
+
+    }
+
+    return blob;
+
+}
+
+
+function loadImageFromBlob(
+    blob
+) {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const image = new Image();
+            const objectURL =
+                URL.createObjectURL(blob);
+
+            image.onload = () => {
+
+                URL.revokeObjectURL(
+                    objectURL
+                );
+
+                resolve(image);
+
+            };
+
+            image.onerror = () => {
+
+                URL.revokeObjectURL(
+                    objectURL
+                );
+
+                reject(
+                    new Error(
+                        "Image resizeसाठी load झाली नाही."
+                    )
+                );
+
+            };
+
+            image.src = objectURL;
+
+        }
+    );
+
+}
+
+
+async function resizeImageBlobToExactSize(
+    sourceBlob,
+    width,
+    height
+) {
+
+    const image = await loadImageFromBlob(
+        sourceBlob
+    );
+
+    const canvas =
+        document.createElement(
+            "canvas"
+        );
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext(
+        "2d",
+        {
+            alpha:
+                sourceBlob.type === "image/png"
+        }
+    );
+
+    if (!context) {
+
+        throw new Error(
+            "This browser cannot resize the image."
+        );
+
+    }
+
+    const sourceRatio =
+        image.naturalWidth /
+        image.naturalHeight;
+
+    const targetRatio = width / height;
+
+    let sourceWidth = image.naturalWidth;
+    let sourceHeight = image.naturalHeight;
+    let sourceX = 0;
+    let sourceY = 0;
+
+    if (sourceRatio > targetRatio) {
+
+        sourceWidth =
+            image.naturalHeight *
+            targetRatio;
+
+        sourceX =
+            (image.naturalWidth - sourceWidth) /
+            2;
+
+    } else if (sourceRatio < targetRatio) {
+
+        sourceHeight =
+            image.naturalWidth /
+            targetRatio;
+
+        sourceY =
+            (image.naturalHeight - sourceHeight) /
+            2;
+
+    }
+
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+
+    context.drawImage(
+        image,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        0,
+        0,
+        width,
+        height
+    );
+
+    const outputType = [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+    ].includes(sourceBlob.type)
+        ? sourceBlob.type
+        : "image/jpeg";
+
+    return new Promise(
+        (resolve, reject) => {
+
+            canvas.toBlob(
+                blob => {
+
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(
+                            new Error(
+                                "Exact-size image तयार झाली नाही."
+                            )
+                        );
+                    }
+
+                },
+                outputType,
+                0.94
+            );
+
+        }
+    );
+
+}
+
+
+function saveBlobAsDownload(
+    blob,
+    filename
+) {
+
+    const objectURL =
+        URL.createObjectURL(blob);
+
+    const link =
+        document.createElement("a");
+
+    link.href = objectURL;
+    link.download = filename;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.setTimeout(
+        () => URL.revokeObjectURL(objectURL),
+        1000
+    );
+
+}
+
+
+function startDirectDownload(
+    imageURL,
+    filename
+) {
+
+    const link =
+        document.createElement("a");
+
+    link.href = imageURL;
+    link.download = filename;
+    link.target = "_blank";
+    link.rel = "noopener";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+}
+
+
+// ============================================================
+// EXACT-SIZE DOWNLOAD SYSTEM
 // ============================================================
 
 async function downloadWallpaper(
-    wallpaperId
+    wallpaperId,
+    selection = {
+        original: true,
+        width: 0,
+        height: 0
+    }
 ) {
+
+    if (STATE.downloadInProgressId) {
+
+        showToast(
+            "एक download आधीच तयार होत आहे.",
+            "info"
+        );
+
+        return false;
+
+    }
 
     const wallpaper =
         STATE.wallpapers.find(
@@ -1508,7 +2259,7 @@ async function downloadWallpaper(
             "error"
         );
 
-        return;
+        return false;
 
     }
 
@@ -1526,52 +2277,119 @@ async function downloadWallpaper(
             "error"
         );
 
-        return;
+        return false;
 
     }
 
 
+    const dimensions = selection.original
+        ? {
+            valid: true,
+            width: 0,
+            height: 0
+        }
+        : validateDownloadDimensions(
+            selection.width,
+            selection.height
+        );
+
+    if (!dimensions.valid) {
+
+        showToast(
+            dimensions.message,
+            "error"
+        );
+
+        return false;
+
+    }
+
+
+    STATE.downloadInProgressId = wallpaperId;
+
+
     try {
 
-        const link =
-            document.createElement(
-                "a"
-            );
-
-
-        link.href =
-            imageURL;
-
-
-        const filename =
+        const filenameBase =
             createFilename(
                 wallpaper.title ||
                 wallpaper.name ||
                 "BharatVarshWallpaper"
             );
 
+        if (selection.original) {
 
-        link.download =
-            `${filename}.${getImageExtension(imageURL)}`;
+            startDirectDownload(
+                imageURL,
+                `${filenameBase}.${getImageExtension(imageURL)}`
+            );
 
+        } else {
 
-        link.target =
-            "_blank";
+            const transformedURL =
+                buildCloudinaryExactSizeURL(
+                    imageURL,
+                    dimensions.width,
+                    dimensions.height
+                );
 
+            let resizedBlob;
 
-        link.rel =
-            "noopener";
+            if (transformedURL) {
 
+                try {
 
-        document.body.appendChild(
-            link
-        );
+                    resizedBlob =
+                        await fetchImageBlob(
+                            transformedURL
+                        );
 
+                } catch (cloudinaryFetchError) {
 
-        link.click();
+                    console.warn(
+                        "Cloudinary download fetch failed; opening exact transformed URL.",
+                        cloudinaryFetchError
+                    );
 
+                    startDirectDownload(
+                        transformedURL,
+                        `${filenameBase}-${dimensions.width}x${dimensions.height}.jpg`
+                    );
 
-        link.remove();
+                }
+
+            } else {
+
+                const sourceBlob =
+                    await fetchImageBlob(
+                        imageURL
+                    );
+
+                resizedBlob =
+                    await resizeImageBlobToExactSize(
+                        sourceBlob,
+                        dimensions.width,
+                        dimensions.height
+                    );
+
+            }
+
+            if (resizedBlob) {
+
+                const extension =
+                    getExtensionForMimeType(
+                        resizedBlob.type,
+                        getImageExtension(imageURL)
+                    );
+
+                saveBlobAsDownload(
+                    resizedBlob,
+                    `${filenameBase}-${dimensions.width}x${dimensions.height}.${extension}`
+                );
+
+            }
+
+        }
 
 
         await updateDownloadCount(
@@ -1580,9 +2398,13 @@ async function downloadWallpaper(
 
 
         showToast(
-            "Wallpaper download किंवा image open सुरू झाले.",
+            selection.original
+                ? "Original wallpaper download सुरू झाले."
+                : `${dimensions.width} × ${dimensions.height} wallpaper download सुरू झाले.`,
             "success"
         );
+
+        return true;
 
 
     } catch (error) {
@@ -1593,22 +2415,18 @@ async function downloadWallpaper(
         );
 
 
-        /*
-         * Browser / CORS मुळे direct download
-         * fail झाल्यास image नवीन tab मध्ये उघडतो.
-         */
-
-        window.open(
-            imageURL,
-            "_blank",
-            "noopener"
-        );
-
-
         showToast(
-            "Wallpaper नवीन tab मध्ये उघडला.",
-            "info"
+            selection.original
+                ? "Wallpaper download करता आला नाही. पुन्हा प्रयत्न करा."
+                : "Selected exact size तयार करता आली नाही. दुसरी size किंवा Original निवडा.",
+            "error"
         );
+
+        return false;
+
+    } finally {
+
+        STATE.downloadInProgressId = null;
 
     }
 
@@ -3125,27 +3943,6 @@ function setupEventListeners() {
     }
 
 
-    // Device recommendation follows orientation changes
-    let deviceResizeTimer = null;
-
-    window.addEventListener(
-        "resize",
-        () => {
-
-            window.clearTimeout(
-                deviceResizeTimer
-            );
-
-            deviceResizeTimer =
-                window.setTimeout(
-                    updateDeviceAdvisor,
-                    150
-                );
-
-        },
-        { passive: true }
-    );
-
 
     // Footer category links
     document.querySelectorAll(
@@ -3173,6 +3970,21 @@ function setupEventListeners() {
                 event.key ===
                 "Escape"
             ) {
+
+                if (
+                    DOM.downloadSizeModal
+                        ?.classList.contains("open")
+                ) {
+
+                    if (!STATE.downloadInProgressId) {
+
+                        closeDownloadSizeDialog();
+
+                    }
+
+                    return;
+
+                }
 
                 closeLoginModal();
 
@@ -3246,9 +4058,107 @@ function setupEventListeners() {
 
             if (STATE.activeWallpaperId) {
 
-                downloadWallpaper(
-                    STATE.activeWallpaperId
+                openDownloadSizeDialog(
+                    STATE.activeWallpaperId,
+                    DOM.wallpaperModalDownload
                 );
+
+            }
+
+        }
+    );
+
+    DOM.downloadSizeClose?.addEventListener(
+        "click",
+        closeDownloadSizeDialog
+    );
+
+    DOM.downloadSizeCancel?.addEventListener(
+        "click",
+        closeDownloadSizeDialog
+    );
+
+    DOM.downloadSizeModal?.addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target === DOM.downloadSizeModal &&
+                !STATE.downloadInProgressId
+            ) {
+
+                closeDownloadSizeDialog();
+
+            }
+
+        }
+    );
+
+    DOM.downloadSizeForm?.addEventListener(
+        "change",
+        updateDownloadSizeSelection
+    );
+
+    DOM.downloadCustomWidth?.addEventListener(
+        "input",
+        updateDownloadSizeSelection
+    );
+
+    DOM.downloadCustomHeight?.addEventListener(
+        "input",
+        updateDownloadSizeSelection
+    );
+
+    DOM.downloadSizeForm?.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+            const wallpaperId =
+                STATE.pendingDownloadWallpaperId;
+
+            const selection =
+                getSelectedDownloadSize();
+
+            if (!wallpaperId || !selection.valid) {
+
+                if (DOM.downloadSizeMessage) {
+
+                    DOM.downloadSizeMessage.textContent =
+                        selection.message ||
+                        "Wallpaper download करता आला नाही.";
+
+                    DOM.downloadSizeMessage.dataset.type =
+                        "error";
+
+                }
+
+                return;
+
+            }
+
+            setDownloadDialogBusy(true);
+
+            try {
+
+                const started =
+                    await downloadWallpaper(
+                        wallpaperId,
+                        selection
+                    );
+
+                if (started) {
+
+                    setDownloadDialogBusy(false);
+                    closeDownloadSizeDialog();
+
+                }
+
+            } finally {
+
+                setDownloadDialogBusy(false);
+                updateDownloadSizeSelection();
 
             }
 
@@ -3430,68 +4340,8 @@ function updateWallpaperCount() {
 
 
 // ============================================================
-// DEVICE RECOMMENDATION + LIVE SITE STATS
+// LIVE SITE STATS
 // ============================================================
-
-function updateDeviceAdvisor() {
-
-    const screenWidth =
-        window.screen?.width ||
-        window.innerWidth;
-
-    const screenHeight =
-        window.screen?.height ||
-        window.innerHeight;
-
-    STATE.deviceRecommendation =
-        getDeviceRecommendation({
-            screenWidth,
-            screenHeight,
-            devicePixelRatio:
-                window.devicePixelRatio || 1
-        });
-
-    const recommendation =
-        STATE.deviceRecommendation;
-
-    if (DOM.deviceResolution) {
-
-        DOM.deviceResolution.textContent =
-            recommendation.label;
-
-    }
-
-    if (DOM.deviceOrientation) {
-
-        DOM.deviceOrientation.textContent =
-            recommendation.orientation;
-
-    }
-
-    if (DOM.deviceAspectRatio) {
-
-        DOM.deviceAspectRatio.textContent =
-            recommendation.aspectRatio;
-
-    }
-
-    if (DOM.deviceAdvisorMessage) {
-
-        DOM.deviceAdvisorMessage.textContent =
-            `For the best fit, choose a ${recommendation.orientation.toLowerCase()} wallpaper near ${recommendation.label}. Always download the original-quality file.`;
-
-    }
-
-    if (DOM.wallpaperModalDevice) {
-
-        DOM.wallpaperModalDevice.textContent =
-            recommendation.label;
-
-    }
-
-
-}
-
 
 function formatCompactNumber(value) {
 
@@ -3623,7 +4473,7 @@ function updateCopyrightYear() {
 function updatePageTitle() {
 
     document.title =
-        "BharatVarshOfficial | Premium Indian Wallpapers";
+        "BharatVarshOfficial | Indian Creator Platform";
 
 }
 
@@ -3871,14 +4721,6 @@ function openWallpaperPreview(wallpaperId) {
     DOM.wallpaperModalResolution.textContent =
         "Detecting…";
 
-    updateDeviceAdvisor();
-
-    const recommendation =
-        STATE.deviceRecommendation;
-
-    DOM.wallpaperModalDevice.textContent =
-        recommendation?.label ||
-        "Not available";
 
     const updateImageDetails = () => {
 
@@ -3899,12 +4741,6 @@ function openWallpaperPreview(wallpaperId) {
                 ? `${width} × ${height} px`
                 : "Original quality";
 
-        DOM.wallpaperModalFit.textContent =
-            getWallpaperFitMessage(
-                width,
-                height,
-                recommendation
-            );
 
     };
 
@@ -3916,8 +4752,6 @@ function openWallpaperPreview(wallpaperId) {
         DOM.wallpaperModalResolution.textContent =
             "Image unavailable";
 
-        DOM.wallpaperModalFit.textContent =
-            "Try opening or downloading the original URL.";
 
     };
 
@@ -3943,7 +4777,10 @@ function closeWallpaperPreview() {
     DOM.wallpaperModal.classList.remove("open");
     DOM.wallpaperModal.hidden = true;
 
-    if (!DOM.loginModal?.classList.contains("active")) {
+    if (
+        !DOM.loginModal?.classList.contains("active") &&
+        !DOM.downloadSizeModal?.classList.contains("open")
+    ) {
 
         document.body.classList.remove("modal-open");
 

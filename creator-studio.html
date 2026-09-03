@@ -40,6 +40,7 @@
         <nav aria-label="Creator Studio navigation">
             <a href="./index.html">Home</a>
             <a href="./profile.html#creator">My channel</a>
+            <a href="#earnings">Earnings</a>
             <button type="button" id="studioSignOut" hidden>
                 Sign out
             </button>
@@ -59,23 +60,23 @@
         </section>
 
         <section id="studioLocked" class="studio-state" hidden>
-            <span class="state-icon">⏳</span>
-            <h1>Creator approval is required</h1>
+            <span class="state-icon">🎨</span>
+            <h1>Create your creator channel first</h1>
             <p>
-                Create your channel and submit its verification application.
-                Creator Studio opens only after admin approval.
+                Creator channels are activated instantly. No admin approval is
+                required to open Creator Studio.
             </p>
-            <a href="./profile.html#creator">Open creator application</a>
+            <a href="./profile.html#creator">Create creator channel</a>
         </section>
 
         <div id="studioContent" hidden>
             <section class="studio-hero">
                 <div>
-                    <span class="eyebrow">APPROVED CREATOR</span>
+                    <span class="eyebrow">CREATOR PLATFORM</span>
                     <h1 id="studioChannelName">Creator Studio</h1>
                     <p id="studioChannelHandle">@creator</p>
                 </div>
-                <span class="approval-badge">✓ Verified access</span>
+                <span class="approval-badge">✓ Active channel</span>
             </section>
 
             <section class="studio-metrics" aria-label="Channel summary">
@@ -91,9 +92,86 @@
                 </article>
                 <article>
                     <span>✅</span>
-                    <strong>Approved</strong>
+                    <strong>Active</strong>
                     <p>Channel status</p>
                 </article>
+            </section>
+
+            <section class="creator-earnings-section" id="earnings">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">CREATOR EARNINGS</span>
+                        <h2>Monetization &amp; payouts</h2>
+                        <p>
+                            BharatVarshOfficial is a creator platform, not only
+                            a wallpaper site. A monetized creator receives
+                            <strong>20% of the verified net platform profit attributed
+                            to that creator's eligible content and activity</strong>.
+                        </p>
+                    </div>
+                    <span id="studioMonetizationStatus" class="service-badge service-offline">
+                        Not eligible yet
+                    </span>
+                </div>
+
+                <div class="earnings-metrics" aria-label="Creator earnings summary">
+                    <article>
+                        <span>₹</span>
+                        <strong id="studioEstimatedEarnings">₹0</strong>
+                        <p>Estimated earnings</p>
+                    </article>
+                    <article>
+                        <span>💰</span>
+                        <strong id="studioAvailableBalance">₹0</strong>
+                        <p>Available balance</p>
+                    </article>
+                    <article>
+                        <span>📈</span>
+                        <strong id="studioLifetimeEarnings">₹0</strong>
+                        <p>Lifetime earnings</p>
+                    </article>
+                    <article>
+                        <span>🏦</span>
+                        <strong id="studioAttributedProfit">₹0</strong>
+                        <p>Verified platform profit generated</p>
+                    </article>
+                </div>
+
+                <div class="monetization-flow">
+                    <h3>How creator earning works</h3>
+                    <ol>
+                        <li><strong>1. Create</strong><span>Create your channel instantly — no admin approval.</span></li>
+                        <li><strong>2. Publish</strong><span>Upload original wallpapers, photos, images or videos. Media is moderated before it goes public.</span></li>
+                        <li><strong>3. Grow</strong><span>Build eligible traffic, views, downloads, followers and monetized activity.</span></li>
+                        <li><strong>4. Earn 20%</strong><span>You receive 20% of verified net platform profit attributed to your eligible content. Invalid/fake traffic is excluded.</span></li>
+                    </ol>
+                </div>
+
+                <div class="payout-panel">
+                    <div>
+                        <span class="eyebrow">PAYOUT</span>
+                        <h3>Request creator payout</h3>
+                        <p>
+                            Creator profit share: <strong id="studioProfitShareRate">20%</strong>.
+                            Minimum payout: <strong id="studioMinimumPayout">₹1,000</strong>.
+                            Only verified creator-profit-share earnings can be withdrawn.
+                        </p>
+                        <p id="studioEarningsMessage" class="creator-upload-message" role="status" aria-live="polite"></p>
+                    </div>
+                    <button type="button" id="studioPayoutButton" disabled>
+                        Request payout
+                    </button>
+                </div>
+
+                <div class="earnings-history">
+                    <div class="earnings-history-heading">
+                        <h3>Earnings activity</h3>
+                        <span>Verified transactions only</span>
+                    </div>
+                    <div id="studioEarningsHistory" class="earnings-history-list">
+                        <p class="studio-empty-state">No earnings activity yet.</p>
+                    </div>
+                </div>
             </section>
 
             <section class="creator-upload-section">
@@ -102,9 +180,9 @@
                         <span class="eyebrow">SECURE UPLOAD GATEWAY</span>
                         <h2>Upload your original creation</h2>
                         <p>
-                            Every file is stored privately in the creator
-                            review flow. It becomes public only after admin
-                            approval.
+                            Every file enters the creator media moderation
+                            queue. Your channel itself needs no admin approval;
+                            only the uploaded media is reviewed before publishing.
                         </p>
                     </div>
                     <span
@@ -220,7 +298,7 @@
             </section>
 
             <section class="review-flow">
-                <h2>How creator publishing will work</h2>
+                <h2>How creator publishing works</h2>
                 <ol>
                     <li><strong>Upload</strong><span>Select your original file.</span></li>
                     <li><strong>Review</strong><span>Admin checks safety and ownership.</span></li>

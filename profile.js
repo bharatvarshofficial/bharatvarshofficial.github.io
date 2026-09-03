@@ -2,7 +2,8 @@ import {
     doc,
     getDoc,
     serverTimestamp,
-    setDoc
+    setDoc,
+    writeBatch
 } from "firebase/firestore";
 
 import {
@@ -14,6 +15,11 @@ import {
     auth,
     db
 } from "./firebase.js";
+
+import {
+    CREATOR_PROFIT_SHARE_RATE,
+    DEFAULT_MINIMUM_PAYOUT_INR
+} from "./creator-earnings-policy.js";
 
 const elements = {
     loading: document.getElementById("profileLoading"),
@@ -48,8 +54,8 @@ const elements = {
     creatorButton: document.getElementById(
         "createCreatorChannel"
     ),
-    creatorApplicationForm: document.getElementById(
-        "creatorApplicationForm"
+    creatorChannelForm: document.getElementById(
+        "creatorChannelForm"
     ),
     creatorChannelName: document.getElementById(
         "creatorChannelName"
@@ -64,27 +70,18 @@ const elements = {
         "creatorWebsite"
     ),
     creatorBio: document.getElementById("creatorBio"),
-    creatorApplicationStatus: document.getElementById(
-        "creatorApplicationStatus"
+    creatorChannelStatus: document.getElementById(
+        "creatorChannelStatus"
     ),
-    creatorApplicationBadge: document.getElementById(
-        "creatorApplicationBadge"
-    ),
-    creatorApplicationHeading: document.getElementById(
-        "creatorApplicationHeading"
-    ),
-    creatorApplicationMessage: document.getElementById(
-        "creatorApplicationMessage"
-    ),
-    submitCreatorApplication: document.getElementById(
-        "submitCreatorApplication"
+    createCreatorChannelNow: document.getElementById(
+        "createCreatorChannelNow"
     ),
     toast: document.getElementById("profileToast")
 };
 
 let currentUser = null;
 let currentProfile = {};
-let currentApplication = null;
+let currentCreator = null;
 let toastTimer = null;
 
 function getInitial(user) {
@@ -181,108 +178,43 @@ function setActiveTab(tabName) {
         });
 }
 
-function renderCreatorState(profile, application = null) {
-    const status =
-        application?.status ||
-        profile.creatorStatus ||
-        "not-created";
+function renderCreatorState(profile, creator = null) {
+    const status = creator?.status || profile.creatorStatus || "not-created";
+    const isActive = ["active", "approved"].includes(status);
 
-    const hasDraft =
-        status !== "not-created";
+    elements.creatorMetric.textContent = isActive ? "Active" : "Not created";
+    elements.creatorBadge.textContent = isActive ? "Active creator" : "Instant setup";
 
-    const labels = {
-        draft: "Draft",
-        pending: "Pending review",
-        approved: "Approved",
-        rejected: "Changes required"
-    };
+    elements.creatorHeading.textContent = isActive
+        ? creator?.channelName || profile.channelName || "Your creator channel"
+        : "Create your BharatVarsh creator channel";
 
-    elements.creatorMetric.textContent =
-        labels[status] || "Not created";
+    elements.creatorDescription.textContent = isActive
+        ? `@${creator?.channelHandle || profile.channelHandle || profile.username} can publish wallpapers, photos, images and videos through Creator Studio.`
+        : "Create your channel instantly. No admin approval is required to become a creator or open Creator Studio.";
 
-    elements.creatorBadge.textContent =
-        status === "draft"
-            ? "Private draft"
-            : (labels[status] || "Not created");
+    elements.creatorButton.textContent = isActive
+        ? "Open Creator Studio"
+        : "Create channel";
 
-    elements.creatorHeading.textContent =
-        hasDraft
-            ? application?.channelName ||
-                profile.channelName ||
-                "Creator channel draft"
-            : "Create your BharatVarsh creator channel";
+    elements.creatorButton.disabled = false;
+    elements.creatorChannelForm.hidden = isActive;
+    elements.creatorChannelStatus.hidden = !isActive;
 
-    elements.creatorDescription.textContent =
-        hasDraft
-            ? `@${application?.channelHandle || profile.channelHandle || profile.username} is linked to your private account.`
-            : "Reserve a private channel draft now. Public uploads, followers and verification will be enabled after approval.";
-
-    const buttonLabels = {
-        draft: "Complete application below",
-        pending: "Awaiting admin review",
-        approved: "Open Creator Studio",
-        rejected: "Update application below"
-    };
-
-    elements.creatorButton.textContent =
-        buttonLabels[status] ||
-        "Create channel draft";
-
-    elements.creatorButton.disabled =
-        hasDraft && status !== "approved";
-
-    const showApplicationForm =
-        status === "draft" ||
-        status === "rejected";
-
-    elements.creatorApplicationForm.hidden =
-        !showApplicationForm;
-
-    elements.creatorApplicationStatus.hidden =
-        !["pending", "approved", "rejected"].includes(status);
-
-    if (showApplicationForm) {
+    if (!isActive) {
         elements.creatorChannelName.value =
-            application?.channelName ||
-            profile.channelName || "";
+            creator?.channelName ||
+            profile.channelName ||
+            currentUser?.displayName ||
+            "";
         elements.creatorChannelHandle.value =
-            application?.channelHandle ||
+            creator?.channelHandle ||
             profile.channelHandle ||
-            profile.username || "";
-        elements.creatorCategory.value =
-            application?.category || "";
-        elements.creatorWebsite.value =
-            application?.website || "";
-        elements.creatorBio.value =
-            application?.bio || "";
-    }
-
-    if (status === "pending") {
-        elements.creatorApplicationBadge.textContent =
-            "Pending review";
-        elements.creatorApplicationHeading.textContent =
-            "Your creator application is with the admin";
-        elements.creatorApplicationMessage.textContent =
-            "Uploads will unlock after the channel information and ownership declaration are approved.";
-    }
-
-    if (status === "approved") {
-        elements.creatorApplicationBadge.textContent =
-            "Approved creator";
-        elements.creatorApplicationHeading.textContent =
-            "Your creator channel is approved";
-        elements.creatorApplicationMessage.textContent =
-            "Creator Studio and secure uploads are the next activation step.";
-    }
-
-    if (status === "rejected") {
-        elements.creatorApplicationBadge.textContent =
-            "Changes required";
-        elements.creatorApplicationHeading.textContent =
-            "Update your creator application";
-        elements.creatorApplicationMessage.textContent =
-            application?.reviewNote ||
-            "Review your channel information below and submit it again.";
+            profile.username ||
+            "";
+        elements.creatorCategory.value = creator?.category || "";
+        elements.creatorWebsite.value = creator?.website || "";
+        elements.creatorBio.value = creator?.bio || "";
     }
 }
 
@@ -383,25 +315,16 @@ async function loadProfile(user) {
     currentProfile = snapshot.data() || {};
 
     try {
-        const applicationSnapshot =
-            await getDoc(
-                doc(
-                    db,
-                    "creatorApplications",
-                    user.uid
-                )
-            );
-
-        currentApplication =
-            applicationSnapshot.exists()
-                ? applicationSnapshot.data()
-                : null;
-    } catch (error) {
-        console.warn(
-            "Creator application is not available yet:",
-            error
+        const creatorSnapshot = await getDoc(
+            doc(db, "creators", user.uid)
         );
-        currentApplication = null;
+
+        currentCreator = creatorSnapshot.exists()
+            ? creatorSnapshot.data()
+            : null;
+    } catch (error) {
+        console.warn("Creator channel is not available yet:", error);
+        currentCreator = null;
     }
 
     const username =
@@ -443,33 +366,64 @@ async function loadProfile(user) {
     setProfileAvatar(user);
     renderCreatorState(
         currentProfile,
-        currentApplication
+        currentCreator
     );
     await loadFavourites(favouriteIds);
 }
 
-async function createCreatorDraft() {
-    if (!currentUser || currentProfile.creatorStatus === "draft") {
+async function createCreatorChannel(event) {
+    event.preventDefault();
+
+    if (!currentUser || currentCreator) return;
+
+    const channelName = elements.creatorChannelName.value.trim();
+    const channelHandle = elements.creatorChannelHandle.value.trim();
+    const category = elements.creatorCategory.value;
+    const website = elements.creatorWebsite.value.trim();
+    const bio = elements.creatorBio.value.trim();
+
+    if (
+        !channelName ||
+        !channelHandle ||
+        !category ||
+        bio.length < 20 ||
+        !elements.creatorRightsConfirmation.checked
+    ) {
+        showToast(
+            "Complete the required fields, write at least 20 characters, and confirm your content rights."
+        );
         return;
     }
 
-    const channelName =
-        currentUser.displayName ||
-        currentProfile.name ||
-        "BharatVarsh Creator";
-
-    const channelHandle =
-        currentProfile.username ||
-        makeHandle(currentUser, currentProfile);
-
-    elements.creatorButton.disabled = true;
-    elements.creatorButton.textContent = "Creating…";
+    elements.createCreatorChannelNow.disabled = true;
+    elements.createCreatorChannelNow.textContent = "Creating…";
 
     try {
-        await setDoc(
-            doc(db, "users", currentUser.uid),
+        const creatorReference = doc(db, "creators", currentUser.uid);
+        const earningsReference = doc(db, "creatorEarnings", currentUser.uid);
+        const userReference = doc(db, "users", currentUser.uid);
+        const earningsSnapshot = await getDoc(earningsReference);
+        const batch = writeBatch(db);
+
+        const creator = {
+            uid: currentUser.uid,
+            channelName,
+            channelHandle,
+            category,
+            website,
+            bio,
+            status: "active",
+            uploads: 0,
+            followers: 0,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        };
+
+        batch.set(creatorReference, creator);
+        batch.set(
+            userReference,
             {
-                creatorStatus: "draft",
+                creatorStatus: "active",
                 channelName,
                 channelHandle,
                 creatorCreatedAt: serverTimestamp(),
@@ -478,120 +432,48 @@ async function createCreatorDraft() {
             { merge: true }
         );
 
-        currentProfile = {
-            ...currentProfile,
-            creatorStatus: "draft",
-            channelName,
-            channelHandle
-        };
-
-        renderCreatorState(currentProfile);
-        showToast("Creator channel draft created successfully.");
-    } catch (error) {
-        console.error("Creator draft error:", error);
-        elements.creatorButton.disabled = false;
-        elements.creatorButton.textContent = "Create channel draft";
-        showToast("Creator channel draft could not be created.");
-    }
-}
-
-async function submitCreatorApplication(event) {
-    event.preventDefault();
-
-    if (!currentUser) return;
-
-    const channelName =
-        elements.creatorChannelName.value.trim();
-    const channelHandle =
-        elements.creatorChannelHandle.value.trim();
-    const category =
-        elements.creatorCategory.value;
-    const website =
-        elements.creatorWebsite.value.trim();
-    const bio =
-        elements.creatorBio.value.trim();
-
-    if (
-        !channelName ||
-        !channelHandle ||
-        !category ||
-        bio.length < 20
-    ) {
-        showToast(
-            "Complete every required field and write at least 20 characters in the description."
-        );
-        return;
-    }
-
-    const application = {
-        uid: currentUser.uid,
-        channelName,
-        channelHandle,
-        category,
-        website,
-        bio,
-        rightsConfirmed: true,
-        status: "pending",
-        submittedAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-    };
-
-    elements.submitCreatorApplication.disabled = true;
-    elements.submitCreatorApplication.textContent =
-        "Submitting…";
-
-    try {
-        await setDoc(
-            doc(
-                db,
-                "creatorApplications",
-                currentUser.uid
-            ),
-            application,
-            { merge: true }
-        );
-
-        await setDoc(
-            doc(db, "users", currentUser.uid),
-            {
-                creatorStatus: "pending",
-                channelName,
-                channelHandle,
+        if (!earningsSnapshot.exists()) {
+            batch.set(earningsReference, {
+                creatorId: currentUser.uid,
+                currency: "INR",
+                monetizationStatus: "not_eligible",
+                eligibleRevenue: 0,
+                attributedPlatformProfit: 0,
+                profitShareRate: CREATOR_PROFIT_SHARE_RATE,
+                estimatedEarnings: 0,
+                availableBalance: 0,
+                lifetimeEarnings: 0,
+                paidOut: 0,
+                minimumPayout: DEFAULT_MINIMUM_PAYOUT_INR,
+                createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
-            },
-            { merge: true }
-        );
+            });
+        }
 
-        currentApplication = {
-            ...application,
-            submittedAt: new Date(),
+        await batch.commit();
+
+        currentCreator = {
+            ...creator,
+            createdAt: new Date(),
             updatedAt: new Date()
         };
-
         currentProfile = {
             ...currentProfile,
-            creatorStatus: "pending",
+            creatorStatus: "active",
             channelName,
             channelHandle
         };
 
-        renderCreatorState(
-            currentProfile,
-            currentApplication
-        );
-
-        showToast(
-            "Creator application submitted for admin verification."
-        );
+        renderCreatorState(currentProfile, currentCreator);
+        showToast("Creator channel created. Creator Studio is ready now.");
     } catch (error) {
-        console.error("Creator application error:", error);
+        console.error("Creator channel creation error:", error);
         showToast(
-            "Creator application could not be submitted. Deploy the new Firestore rules and try again."
+            "Creator channel could not be created. Deploy the latest Firestore rules and try again."
         );
     } finally {
-        elements.submitCreatorApplication.disabled = false;
-        elements.submitCreatorApplication.textContent =
-            "Submit for admin verification";
+        elements.createCreatorChannelNow.disabled = false;
+        elements.createCreatorChannelNow.textContent = "Create channel instantly";
     }
 }
 
@@ -615,24 +497,24 @@ window.addEventListener("hashchange", () => {
 elements.creatorButton.addEventListener(
     "click",
     () => {
-        const status =
-            currentApplication?.status ||
-            currentProfile.creatorStatus;
+        const status = currentCreator?.status || currentProfile.creatorStatus;
 
-        if (status === "approved") {
-            window.location.assign(
-                "./creator-studio.html"
-            );
+        if (["active", "approved"].includes(status)) {
+            window.location.assign("./creator-studio.html");
             return;
         }
 
-        createCreatorDraft();
+        elements.creatorChannelForm.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+        elements.creatorChannelName.focus();
     }
 );
 
-elements.creatorApplicationForm.addEventListener(
+elements.creatorChannelForm.addEventListener(
     "submit",
-    submitCreatorApplication
+    createCreatorChannel
 );
 
 elements.avatar.addEventListener("error", () => {

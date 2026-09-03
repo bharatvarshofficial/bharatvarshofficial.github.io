@@ -6,6 +6,7 @@ import {
     getDocs,
     query,
     serverTimestamp,
+    setDoc,
     where
 } from "firebase/firestore";
 
@@ -61,6 +62,12 @@ const FILE_RULES = Object.freeze({
     }
 });
 
+import {
+    CREATOR_PROFIT_SHARE_RATE,
+    CREATOR_PROFIT_SHARE_PERCENT,
+    DEFAULT_MINIMUM_PAYOUT_INR
+} from "./creator-earnings-policy.js";
+
 const elements = {
     loading: document.getElementById("studioLoading"),
     signedOut: document.getElementById("studioSignedOut"),
@@ -88,18 +95,30 @@ const elements = {
     progressWrap: document.getElementById("uploadProgressWrap"),
     progress: document.getElementById("creatorUploadProgress"),
     progressLabel: document.getElementById("creatorUploadProgressLabel"),
-    submissionsList: document.getElementById("creatorSubmissionsList")
+    submissionsList: document.getElementById("creatorSubmissionsList"),
+    monetizationStatus: document.getElementById("studioMonetizationStatus"),
+    estimatedEarnings: document.getElementById("studioEstimatedEarnings"),
+    availableBalance: document.getElementById("studioAvailableBalance"),
+    lifetimeEarnings: document.getElementById("studioLifetimeEarnings"),
+    attributedProfit: document.getElementById("studioAttributedProfit"),
+    profitShareRate: document.getElementById("studioProfitShareRate"),
+    minimumPayout: document.getElementById("studioMinimumPayout"),
+    earningsMessage: document.getElementById("studioEarningsMessage"),
+    payoutButton: document.getElementById("studioPayoutButton"),
+    earningsHistory: document.getElementById("studioEarningsHistory")
 };
 
 let currentUser = null;
 let currentCreator = null;
+let currentEarnings = null;
+let currentPayout = null;
 let previewObjectUrl = "";
 
 function showState(state) {
     elements.loading.hidden = state !== "loading";
     elements.signedOut.hidden = state !== "signed-out";
     elements.locked.hidden = state !== "locked";
-    elements.content.hidden = state !== "approved";
+    elements.content.hidden = state !== "active";
     elements.signOut.hidden = state === "signed-out";
 }
 
@@ -141,6 +160,224 @@ function renderUploadServiceState() {
     elements.uploadMessage.textContent = configured
         ? "Your upload will be sent to the admin review queue."
         : "Deploy the signed upload Worker and add its URL to creator-upload-config.js.";
+}
+
+function formatINR(value) {
+    return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 2
+    }).format(Math.max(0, Number(value) || 0));
+}
+
+function getMonetizationLabel(status) {
+    const labels = {
+        not_eligible: "Not eligible yet",
+        eligible: "Eligible",
+        under_review: "Monetization review",
+        monetized: "Monetized",
+        paused: "Monetization paused"
+    };
+
+    return labels[status] || "Not eligible yet";
+}
+
+function renderEarnings() {
+    const earnings = currentEarnings || {};
+    const status = earnings.monetizationStatus || "not_eligible";
+    const minimum = Math.max(0, Number(earnings.minimumPayout) || DEFAULT_MINIMUM_PAYOUT_INR);
+    const available = Math.max(0, Number(earnings.availableBalance) || 0);
+    const payoutPending = currentPayout?.status === "pending";
+    const canRequest = status === "monetized" && available >= minimum && !payoutPending;
+
+    elements.monetizationStatus.textContent = getMonetizationLabel(status);
+    elements.monetizationStatus.classList.toggle("service-online", status === "monetized");
+    elements.monetizationStatus.classList.toggle("service-offline", status !== "monetized");
+    elements.estimatedEarnings.textContent = formatINR(earnings.estimatedEarnings);
+    elements.availableBalance.textContent = formatINR(available);
+    elements.lifetimeEarnings.textContent = formatINR(earnings.lifetimeEarnings);
+    elements.attributedProfit.textContent = formatINR(earnings.attributedPlatformProfit);
+    const shareRate = Number(earnings.profitShareRate) || CREATOR_PROFIT_SHARE_RATE;
+    elements.profitShareRate.textContent = `${Math.round(shareRate * 100)}%`;
+    elements.minimumPayout.textContent = formatINR(minimum);
+    elements.payoutButton.disabled = !canRequest;
+
+    if (payoutPending) {
+        elements.earningsMessage.textContent =
+            `Payout request for ${formatINR(currentPayout.amount)} is pending.`;
+    } else if (status !== "monetized") {
+        elements.earningsMessage.textContent =
+            "Keep publishing original content and growing eligible activity. Monetization is separate from channel creation.";
+    } else if (available < minimum) {
+        elements.earningsMessage.textContent =
+            `You need ${formatINR(minimum - available)} more verified earnings to request a payout.`;
+    } else {
+        elements.earningsMessage.textContent =
+            "Your verified balance is eligible for a payout request.";
+    }
+}
+
+async function loadCreatorEarnings() {
+    const earningsReference = doc(db, "creatorEarnings", currentUser.uid);
+    let earningsSnapshot = await getDoc(earningsReference);
+
+    if (!earningsSnapshot.exists()) {
+        await setDoc(earningsReference, {
+            creatorId: currentUser.uid,
+            currency: "INR",
+            monetizationStatus: "not_eligible",
+            eligibleRevenue: 0,
+            attributedPlatformProfit: 0,
+            profitShareRate: CREATOR_PROFIT_SHARE_RATE,
+            estimatedEarnings: 0,
+            availableBalance: 0,
+            lifetimeEarnings: 0,
+            paidOut: 0,
+            minimumPayout: DEFAULT_MINIMUM_PAYOUT_INR,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+        earningsSnapshot = await getDoc(earningsReference);
+    }
+
+    currentEarnings = earningsSnapshot.data() || {};
+
+    const payoutSnapshot = await getDoc(
+        doc(db, "payoutRequests", currentUser.uid)
+    ).catch(() => null);
+
+    currentPayout = payoutSnapshot?.exists()
+        ? payoutSnapshot.data()
+        : null;
+
+    renderEarnings();
+}
+
+function createEarningTransactionRow(transaction) {
+    const row = document.createElement("div");
+    row.className = "earnings-history-row";
+
+    const copy = document.createElement("div");
+    const title = document.createElement("strong");
+    const meta = document.createElement("span");
+    const amount = document.createElement("strong");
+
+    const labels = {
+        profit_share_credit: `${CREATOR_PROFIT_SHARE_PERCENT}% creator profit share`,
+        revenue_credit: "Verified revenue share (legacy)",
+        payout: "Creator payout"
+    };
+
+    title.textContent = labels[transaction.type] || "Earnings activity";
+    if (transaction.type === "profit_share_credit") {
+        const profit = formatINR(transaction.attributedPlatformProfit);
+        meta.textContent = `${CREATOR_PROFIT_SHARE_PERCENT}% of ${profit} verified creator-attributed profit`;
+    } else {
+        meta.textContent = transaction.source || "BharatVarshOfficial";
+    }
+
+    const numericAmount = Math.max(0, Number(transaction.amount) || 0);
+    amount.textContent = transaction.type === "payout"
+        ? `−${formatINR(numericAmount)}`
+        : `+${formatINR(numericAmount)}`;
+
+    copy.append(title, meta);
+    row.append(copy, amount);
+    return row;
+}
+
+async function loadCreatorEarningTransactions() {
+    if (!elements.earningsHistory) return;
+
+    try {
+        const snapshot = await getDocs(
+            query(
+                collection(db, "creatorEarningTransactions"),
+                where("creatorId", "==", currentUser.uid)
+            )
+        );
+
+        const transactions = snapshot.docs
+            .map((entry) => ({ id: entry.id, ...entry.data() }))
+            .sort((left, right) =>
+                (right.createdAt?.seconds || 0) -
+                (left.createdAt?.seconds || 0)
+            );
+
+        elements.earningsHistory.replaceChildren();
+
+        if (!transactions.length) {
+            const empty = document.createElement("p");
+            empty.className = "studio-empty-state";
+            empty.textContent = "No earnings activity yet.";
+            elements.earningsHistory.append(empty);
+            return;
+        }
+
+        transactions.slice(0, 20).forEach((transaction) => {
+            elements.earningsHistory.append(
+                createEarningTransactionRow(transaction)
+            );
+        });
+    } catch (error) {
+        console.error("Creator earnings history error:", error);
+        elements.earningsHistory.innerHTML =
+            '<p class="studio-empty-state">Earnings activity is unavailable right now.</p>';
+    }
+}
+
+async function requestCreatorPayout() {
+    if (!currentUser || !currentEarnings) return;
+
+    const status = currentEarnings.monetizationStatus || "not_eligible";
+    const minimum = Math.max(0, Number(currentEarnings.minimumPayout) || 1000);
+    const available = Math.max(0, Number(currentEarnings.availableBalance) || 0);
+
+    if (status !== "monetized" || available < minimum) {
+        renderEarnings();
+        return;
+    }
+
+    elements.payoutButton.disabled = true;
+    elements.payoutButton.textContent = "Requesting…";
+
+    try {
+        const payoutReference = doc(db, "payoutRequests", currentUser.uid);
+        const payoutSnapshot = await getDoc(payoutReference);
+
+        if (payoutSnapshot.exists() && payoutSnapshot.data().status === "pending") {
+            currentPayout = payoutSnapshot.data();
+            renderEarnings();
+            return;
+        }
+
+        await setDoc(
+            payoutReference,
+            {
+                creatorId: currentUser.uid,
+                amount: available,
+                currency: "INR",
+                status: "pending",
+                requestedAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            },
+            { merge: payoutSnapshot.exists() }
+        );
+
+        currentPayout = {
+            creatorId: currentUser.uid,
+            amount: available,
+            currency: "INR",
+            status: "pending"
+        };
+        renderEarnings();
+    } catch (error) {
+        console.error("Creator payout request error:", error);
+        elements.earningsMessage.textContent =
+            "Payout request could not be created. Please try again later.";
+    } finally {
+        elements.payoutButton.textContent = "Request payout";
+    }
 }
 
 function populateCategories() {
@@ -512,7 +749,7 @@ async function loadCreatorStudio(user) {
 
     if (
         !creatorSnapshot.exists() ||
-        creatorSnapshot.data().status !== "approved"
+        !["active", "approved"].includes(creatorSnapshot.data().status)
     ) {
         showState("locked");
         return;
@@ -532,9 +769,13 @@ async function loadCreatorStudio(user) {
     elements.followerCount.textContent =
         String(Number(currentCreator.followers) || 0);
 
-    showState("approved");
+    showState("active");
     renderUploadServiceState();
-    await loadCreatorSubmissions();
+    await Promise.all([
+        loadCreatorSubmissions(),
+        loadCreatorEarnings(),
+        loadCreatorEarningTransactions()
+    ]);
 }
 
 populateCategories();
@@ -544,6 +785,7 @@ renderUploadServiceState();
 elements.mediaType.addEventListener("change", updateFileRules);
 elements.file.addEventListener("change", previewSelectedFile);
 elements.uploadForm.addEventListener("submit", submitCreatorMedia);
+elements.payoutButton.addEventListener("click", requestCreatorPayout);
 
 elements.signOut.addEventListener("click", async () => {
     await signOut(auth);
@@ -554,6 +796,8 @@ onAuthStateChanged(auth, async (user) => {
     if (!user) {
         currentUser = null;
         currentCreator = null;
+        currentEarnings = null;
+        currentPayout = null;
         showState("signed-out");
         return;
     }

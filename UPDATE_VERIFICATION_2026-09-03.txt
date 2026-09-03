@@ -1,0 +1,21 @@
+BharatVarshOfficial Creator Platform — 20% Profit Share Update
+Date: 2026-09-03
+
+Implemented:
+- Creator share fixed at 20% of verified net platform profit attributable to that creator's eligible content/activity.
+- Admin enters verified creator-attributed platform profit; dashboard calculates the 20% creator share automatically.
+- Creator Studio displays fixed 20% policy, verified attributed profit, balances and profit-share transaction history.
+- Firestore defaults/rules include fixed profitShareRate = 0.20 and protect financial updates as admin-only.
+- Instant creator channel creation remains enabled without admin channel approval.
+- Media moderation before public publishing remains enabled.
+- Wallpaper download size selection remains enabled.
+- Smart Size Recommendation/device advisor remains removed.
+
+Verification:
+- npm test: 40/40 tests PASS.
+- JS syntax checks passed for creator-earnings-policy.js, creator-studio.js, profile.js and dashboard.js.
+- Vite production build was not executed in this environment because dependencies were not available locally and dependency installation timed out.
+
+Production note:
+- The fixed 20% settlement engine is implemented.
+- Automatic ingestion of actual ad/sponsor/payment profit still requires connection to the chosen monetization/analytics backend. Until then, the admin dashboard accepts verified creator-attributed profit and safely computes the 20% share.

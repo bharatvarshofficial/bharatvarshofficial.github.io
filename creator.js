@@ -37,31 +37,49 @@ function showError(message) {
     elements.error.hidden = false;
 }
 
-function renderUploads(wallpapers) {
-    elements.uploadCount.textContent = `${wallpapers.length} published`;
+function renderUploads(creations) {
+    elements.uploadCount.textContent = `${creations.length} published`;
     elements.grid.replaceChildren();
-    wallpapers.forEach((wallpaper) => {
-        const imageUrl = wallpaper.imageUrl || wallpaper.imageURL || wallpaper.image || wallpaper.url || wallpaper.downloadURL;
-        if (!imageUrl) return;
+
+    creations.forEach((creation) => {
+        const imageUrl = creation.imageUrl || creation.imageURL || creation.image || creation.url || creation.downloadURL;
+        const videoUrl = creation.videoUrl || (creation.resourceType === "video" ? creation.secureUrl : "");
+        const mediaUrl = videoUrl || imageUrl;
+        if (!mediaUrl) return;
+
         const card = document.createElement("article");
         card.className = "creator-card";
-        const image = document.createElement("img");
-        image.src = imageUrl;
-        image.alt = wallpaper.title || wallpaper.name || "Creator wallpaper";
-        image.loading = "lazy";
-        image.decoding = "async";
+
+        const media = videoUrl
+            ? document.createElement("video")
+            : document.createElement("img");
+
+        media.src = mediaUrl;
+        media.loading = "lazy";
+
+        if (media instanceof HTMLVideoElement) {
+            media.controls = true;
+            media.preload = "metadata";
+            media.playsInline = true;
+        } else {
+            media.alt = creation.title || creation.name || "Creator creation";
+            media.decoding = "async";
+        }
+
         const content = document.createElement("div");
         content.className = "creator-card-content";
         const title = document.createElement("h3");
-        title.textContent = wallpaper.title || wallpaper.name || "Indian wallpaper";
+        title.textContent = creation.title || creation.name || "Untitled creation";
         const category = document.createElement("p");
-        category.textContent = wallpaper.category || "Indian culture";
+        const mediaType = creation.publicCollection || creation.mediaType || "creation";
+        category.textContent = `${creation.category || "Other"} · ${mediaType}`;
         content.append(title, category);
-        card.append(image, content);
+        card.append(media, content);
         elements.grid.append(card);
     });
-    elements.uploads.hidden = wallpapers.length === 0;
-    elements.empty.hidden = wallpapers.length !== 0;
+
+    elements.uploads.hidden = creations.length === 0;
+    elements.empty.hidden = creations.length !== 0;
 }
 
 async function loadCreator() {
@@ -75,7 +93,9 @@ async function loadCreator() {
         const creatorSnapshot = await getDocs(
             query(collection(db, "creators"), where("channelHandle", "==", handle))
         );
-        const creatorEntry = creatorSnapshot.docs.find((entry) => entry.data().status === "approved");
+        const creatorEntry = creatorSnapshot.docs.find((entry) =>
+            ["active", "approved"].includes(entry.data().status)
+        );
         if (!creatorEntry) {
             showError("This creator channel is not available.");
             return;
@@ -83,7 +103,7 @@ async function loadCreator() {
         const creator = creatorEntry.data();
         elements.name.textContent = creator.channelName || "BharatVarsh Creator";
         elements.handle.textContent = `@${creator.channelHandle || handle}`;
-        elements.bio.textContent = creator.bio || "Published wallpapers celebrating Bharat.";
+        elements.bio.textContent = creator.bio || "Creator on BharatVarshOfficial.";
         elements.avatar.textContent = getInitial(creator.channelName);
         if (creator.website) {
             elements.website.href = creator.website;
@@ -91,10 +111,31 @@ async function loadCreator() {
             elements.website.hidden = false;
         }
         elements.profile.hidden = false;
-        const uploadsSnapshot = await getDocs(
-            query(collection(db, "wallpapers"), where("creatorId", "==", creatorEntry.id))
+        const collectionNames = ["wallpapers", "images", "videos"];
+        const uploadSnapshots = await Promise.all(
+            collectionNames.map((collectionName) =>
+                getDocs(
+                    query(
+                        collection(db, collectionName),
+                        where("creatorId", "==", creatorEntry.id)
+                    )
+                )
+            )
         );
-        renderUploads(uploadsSnapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() })));
+
+        const creations = uploadSnapshots.flatMap((snapshot, index) =>
+            snapshot.docs.map((entry) => ({
+                id: entry.id,
+                publicCollection: collectionNames[index],
+                ...entry.data()
+            }))
+        );
+
+        creations.sort((left, right) =>
+            (right.createdAt?.seconds || 0) - (left.createdAt?.seconds || 0)
+        );
+
+        renderUploads(creations);
         elements.loading.hidden = true;
     } catch (error) {
         console.error("Creator channel loading error:", error);

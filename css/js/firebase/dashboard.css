@@ -1166,3 +1166,97 @@ small {
     }
 
 }
+
+/* ==========================================
+   CREATOR EARNINGS + PAYOUTS
+========================================== */
+.creator-earnings-admin-section {
+    margin: 24px 0;
+    padding: 24px;
+    border: 1px solid var(--border-color, #2d3340);
+    border-radius: 16px;
+    background: var(--card-bg, #121720);
+}
+
+.creator-earnings-admin-form {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    gap: 14px;
+    align-items: end;
+    margin-top: 18px;
+}
+
+.creator-earnings-admin-form .form-group {
+    margin: 0;
+}
+
+.creator-earnings-admin-form button {
+    min-height: 44px;
+}
+
+.financial-note {
+    margin: 12px 0 18px;
+    color: #9ca7b7;
+    font-size: 12px;
+}
+
+.creator-payout-requests-list {
+    display: grid;
+    gap: 12px;
+}
+
+.creator-payout-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid var(--border-color, #2d3340);
+    border-radius: 12px;
+}
+
+.creator-payout-card h3 {
+    margin: 0 0 4px;
+    font-size: 14px;
+}
+
+.creator-payout-card p {
+    margin: 0;
+    color: #9ca7b7;
+    font-size: 12px;
+}
+
+.creator-payout-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.creator-payout-actions button {
+    padding: 9px 12px;
+    border: 1px solid #394252;
+    border-radius: 9px;
+    background: #171d27;
+    color: #f7f8fa;
+    cursor: pointer;
+}
+
+@media (max-width: 900px) {
+    .creator-earnings-admin-form {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 620px) {
+    .creator-earnings-admin-form {
+        grid-template-columns: 1fr;
+    }
+
+    .creator-payout-card {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .creator-payout-actions button {
+        flex: 1;
+    }
+}

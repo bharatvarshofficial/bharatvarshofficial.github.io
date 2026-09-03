@@ -64,3 +64,11 @@ h1, h2, p { margin-top: 0; }
     .creator-header { align-items: flex-start; flex-direction: column; gap: 1rem; }
     .creator-profile { align-items: flex-start; flex-direction: column; }
 }
+
+.creator-card video {
+    aspect-ratio: 9 / 16;
+    background: #05070a;
+    display: block;
+    object-fit: cover;
+    width: 100%;
+}

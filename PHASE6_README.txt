@@ -1,3 +1,5 @@
+NOTE 2026-09-03: Creator CHANNEL approval is no longer required. Creator MEDIA review before public publishing remains required.
+
 BharatVarshOfficial - Phase 6 Secure Creator Uploads
 ====================================================
 

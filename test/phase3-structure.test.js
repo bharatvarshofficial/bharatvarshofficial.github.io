@@ -16,26 +16,22 @@ test("public page contains no dead placeholder links or fake launch stats", asyn
     assert.doesNotMatch(html, /5000\+|100K\+|10K\+/);
 });
 
-test("device advisor and accessible wallpaper dialog are wired", async () => {
+test("accessible wallpaper dialog remains wired without smart device recommendations", async () => {
     const [html, script] = await Promise.all([
         readProjectFile("index.html"),
         readProjectFile("script.js")
     ]);
 
-    [
-        "deviceResolution",
-        "deviceOrientation",
-        "deviceAspectRatio",
-        "wallpaperModal",
-        "wallpaperModalDownload"
-    ].forEach((id) => {
+    ["wallpaperModal", "wallpaperModalDownload"].forEach((id) => {
         assert.match(html, new RegExp(`id=["']${id}["']`));
     });
 
     assert.match(html, /role=["']dialog["']/);
     assert.match(html, /aria-modal=["']true["']/);
     assert.match(script, /function openWallpaperPreview\(/);
-    assert.match(script, /getDeviceRecommendation\(/);
+    assert.doesNotMatch(html, /Smart size recommendation/i);
+    assert.doesNotMatch(html, /id=["']deviceResolution["']/);
+    assert.doesNotMatch(script, /getDeviceRecommendation\(/);
 });
 
 test("public policy and search discovery files are included", async () => {

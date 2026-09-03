@@ -17,14 +17,14 @@ service cloud.firestore {
         && request.auth.uid == userId;
     }
 
-    function isApprovedCreator(userId) {
+    function isActiveCreator(userId) {
       return isOwner(userId)
         && exists(
           /databases/$(database)/documents/creators/$(userId)
         )
         && get(
           /databases/$(database)/documents/creators/$(userId)
-        ).data.status == 'approved';
+        ).data.status in ['active', 'approved'];
     }
 
     match /users/{userId} {
@@ -41,22 +41,35 @@ service cloud.firestore {
               .diff(resource.data)
               .affectedKeys()
               .hasAny(['creatorStatus'])
-            || request.resource.data.get(
-              'creatorStatus',
-              'not-created'
-            ) in ['draft', 'pending']
+            || (
+              request.resource.data.creatorStatus == 'active'
+              && existsAfter(
+                /databases/$(database)/documents/creators/$(userId)
+              )
+              && getAfter(
+                /databases/$(database)/documents/creators/$(userId)
+              ).data.status == 'active'
+            )
           )
         );
       allow delete: if isAdmin();
     }
 
+    // Legacy creator applications are read-only. New creator channels
+    // are created instantly and do not need an admin approval request.
     match /creatorApplications/{userId} {
       allow read: if isOwner(userId) || isAdmin();
+      allow create, update, delete: if false;
+    }
 
-      allow create: if isOwner(userId)
-        && request.resource.data.uid == userId
-        && request.resource.data.status == 'pending'
-        && request.resource.data.rightsConfirmed == true
+    match /creators/{creatorId} {
+      allow read: if true;
+
+      allow create: if isOwner(creatorId)
+        && request.resource.data.uid == creatorId
+        && request.resource.data.status == 'active'
+        && request.resource.data.uploads == 0
+        && request.resource.data.followers == 0
         && request.resource.data.keys().hasOnly([
           'uid',
           'channelName',
@@ -64,9 +77,10 @@ service cloud.firestore {
           'category',
           'website',
           'bio',
-          'rightsConfirmed',
           'status',
-          'submittedAt',
+          'uploads',
+          'followers',
+          'createdAt',
           'updatedAt'
         ])
         && request.resource.data.channelName is string
@@ -75,28 +89,26 @@ service cloud.firestore {
         && request.resource.data.channelHandle is string
         && request.resource.data.channelHandle.size() >= 3
         && request.resource.data.channelHandle.size() <= 40
-        && request.resource.data.bio is string
-        && request.resource.data.bio.size() >= 20
-        && request.resource.data.bio.size() <= 500
-        && request.resource.data.category is string
         && request.resource.data.category in [
           'Wallpapers',
           'Photography',
-          'Wedding & Events',
+          'Video Creator',
           'Art & Design',
-          'Indian Culture',
-          'Nature',
+          'Culture & Heritage',
+          'Nature & Travel',
           'Other'
         ]
         && request.resource.data.website is string
         && request.resource.data.website.size() <= 200
-        && request.resource.data.submittedAt == request.time
+        && request.resource.data.bio is string
+        && request.resource.data.bio.size() >= 20
+        && request.resource.data.bio.size() <= 500
+        && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time;
 
       allow update: if isAdmin()
         || (
-          isOwner(userId)
-          && resource.data.status == 'rejected'
+          isOwner(creatorId)
           && request.resource.data
             .diff(resource.data)
             .affectedKeys()
@@ -105,46 +117,134 @@ service cloud.firestore {
               'category',
               'website',
               'bio',
-              'rightsConfirmed',
-              'status',
-              'submittedAt',
               'updatedAt'
             ])
-          && request.resource.data.uid == userId
-          && request.resource.data.status == 'pending'
-          && request.resource.data.rightsConfirmed == true
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.channelHandle == resource.data.channelHandle
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.uploads == resource.data.uploads
+          && request.resource.data.followers == resource.data.followers
           && request.resource.data.channelName is string
           && request.resource.data.channelName.size() >= 3
           && request.resource.data.channelName.size() <= 60
-          && request.resource.data.channelHandle is string
-          && request.resource.data.channelHandle
-            == resource.data.channelHandle
-          && request.resource.data.bio is string
-          && request.resource.data.bio.size() >= 20
-          && request.resource.data.bio.size() <= 500
-          && request.resource.data.category is string
           && request.resource.data.category in [
             'Wallpapers',
             'Photography',
-            'Wedding & Events',
+            'Video Creator',
             'Art & Design',
-            'Indian Culture',
-            'Nature',
+            'Culture & Heritage',
+            'Nature & Travel',
             'Other'
           ]
           && request.resource.data.website is string
           && request.resource.data.website.size() <= 200
-          && request.resource.data.submittedAt == request.time
+          && request.resource.data.bio is string
+          && request.resource.data.bio.size() >= 20
+          && request.resource.data.bio.size() <= 500
           && request.resource.data.updatedAt == request.time
         );
 
-      allow delete: if isAdmin()
-        || (isOwner(userId) && resource.data.status != 'approved');
+      allow delete: if isAdmin();
     }
 
-    match /creators/{creatorId} {
-      allow read: if true;
+    match /creatorEarnings/{creatorId} {
+      allow read: if isOwner(creatorId) || isAdmin();
+
+      allow create: if isOwner(creatorId)
+        && request.resource.data.creatorId == creatorId
+        && request.resource.data.currency == 'INR'
+        && request.resource.data.monetizationStatus == 'not_eligible'
+        && request.resource.data.eligibleRevenue == 0
+        && request.resource.data.attributedPlatformProfit == 0
+        && request.resource.data.profitShareRate == 0.20
+        && request.resource.data.estimatedEarnings == 0
+        && request.resource.data.availableBalance == 0
+        && request.resource.data.lifetimeEarnings == 0
+        && request.resource.data.paidOut == 0
+        && request.resource.data.minimumPayout == 1000
+        && request.resource.data.keys().hasOnly([
+          'creatorId',
+          'currency',
+          'monetizationStatus',
+          'eligibleRevenue',
+          'attributedPlatformProfit',
+          'profitShareRate',
+          'estimatedEarnings',
+          'availableBalance',
+          'lifetimeEarnings',
+          'paidOut',
+          'minimumPayout',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      // Financial values are trusted-backend/admin controlled.
+      allow update, delete: if isAdmin();
+    }
+
+    match /creatorEarningTransactions/{transactionId} {
+      allow read: if isAdmin()
+        || (
+          isSignedIn()
+          && resource.data.creatorId == request.auth.uid
+        );
       allow create, update, delete: if isAdmin();
+    }
+
+    match /payoutRequests/{creatorId} {
+      allow read: if isOwner(creatorId) || isAdmin();
+
+      allow create: if isOwner(creatorId)
+        && request.resource.data.creatorId == creatorId
+        && request.resource.data.status == 'pending'
+        && request.resource.data.currency == 'INR'
+        && request.resource.data.amount is number
+        && request.resource.data.amount >= get(
+          /databases/$(database)/documents/creatorEarnings/$(creatorId)
+        ).data.minimumPayout
+        && request.resource.data.amount <= get(
+          /databases/$(database)/documents/creatorEarnings/$(creatorId)
+        ).data.availableBalance
+        && request.resource.data.keys().hasOnly([
+          'creatorId',
+          'amount',
+          'currency',
+          'status',
+          'requestedAt',
+          'updatedAt'
+        ])
+        && request.resource.data.requestedAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isAdmin()
+        || (
+          isOwner(creatorId)
+          && resource.data.status in ['paid', 'rejected']
+          && request.resource.data.creatorId == creatorId
+          && request.resource.data.status == 'pending'
+          && request.resource.data.currency == 'INR'
+          && request.resource.data.amount is number
+          && request.resource.data.amount >= get(
+            /databases/$(database)/documents/creatorEarnings/$(creatorId)
+          ).data.minimumPayout
+          && request.resource.data.amount <= get(
+            /databases/$(database)/documents/creatorEarnings/$(creatorId)
+          ).data.availableBalance
+          && request.resource.data.keys().hasOnly([
+            'creatorId',
+            'amount',
+            'currency',
+            'status',
+            'requestedAt',
+            'updatedAt'
+          ])
+          && request.resource.data.requestedAt == request.time
+          && request.resource.data.updatedAt == request.time
+        );
+
+      allow delete: if isAdmin();
     }
 
     match /creatorMediaSubmissions/{submissionId} {
@@ -154,7 +254,7 @@ service cloud.firestore {
           && resource.data.creatorId == request.auth.uid
         );
 
-      allow create: if isApprovedCreator(request.auth.uid)
+      allow create: if isActiveCreator(request.auth.uid)
         && request.resource.data.creatorId == request.auth.uid
         && request.resource.data.status == 'pending'
         && request.resource.data.rightsConfirmed == true

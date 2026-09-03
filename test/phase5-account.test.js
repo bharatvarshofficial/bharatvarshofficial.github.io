@@ -33,7 +33,7 @@ test("signed-in users receive a YouTube-style account menu", async () => {
     assert.match(script, /updateAccountAvatar\(/);
 });
 
-test("private profile page exposes account and creator foundations", async () => {
+test("private profile page exposes account and instant creator foundations", async () => {
     const [html, script, viteConfig] = await Promise.all([
         readProjectFile("profile.html"),
         readProjectFile("profile.js"),
@@ -44,7 +44,7 @@ test("private profile page exposes account and creator foundations", async () =>
     assert.match(html, /noindex, nofollow/);
     assert.match(html, /data-profile-tab=["']favourites["']/);
     assert.match(html, /data-profile-tab=["']creator["']/);
-    assert.match(script, /creatorStatus:\s*["']draft["']/);
+    assert.match(script, /creatorStatus:\s*["']active["']/);
     assert.match(script, /collection|wallpapers/);
     assert.match(viteConfig, /profile\.html/);
 });

@@ -58,7 +58,8 @@
 
         <nav aria-label="Profile navigation">
             <a href="./index.html">Home</a>
-            <a href="./index.html#featured">Wallpapers</a>
+            <a href="./index.html#featured">Discover</a>
+            <a href="./creator-studio.html">Creator Studio</a>
         </nav>
 
         <button
@@ -89,7 +90,7 @@
             <div class="state-icon">👤</div>
             <h1>Sign in to open your profile</h1>
             <p>
-                Your favourites, downloads and creator channel are private
+                Your favourites, downloads and creator tools are private
                 until you sign in with Google.
             </p>
             <a href="./index.html#login">Continue to sign in</a>
@@ -136,7 +137,7 @@
                         href="./index.html#featured"
                         class="profile-primary-action"
                     >
-                        Browse wallpapers
+                        Explore creations
                     </a>
                 </div>
             </section>
@@ -183,7 +184,7 @@
                     <article>
                         <span>❤️</span>
                         <strong id="profilePageFavouriteCount">0</strong>
-                        <p>Favourite wallpapers</p>
+                        <p>Favourite creations</p>
                     </article>
                     <article>
                         <span>⬇️</span>
@@ -202,11 +203,11 @@
                         <span class="eyebrow">YOUR ACCOUNT</span>
                         <h2>Everything you save, in one place</h2>
                         <p>
-                            Continue browsing wallpapers, manage favourites,
-                            and prepare your future creator channel.
+                            Continue discovering creations, manage favourites, and build
+                            your own creator channel on BharatVarshOfficial.
                         </p>
                     </div>
-                    <a href="./index.html#featured">Explore collection</a>
+                    <a href="./index.html#featured">Explore platform</a>
                 </div>
             </section>
 
@@ -218,7 +219,7 @@
                 <div class="panel-heading">
                     <div>
                         <span class="eyebrow">SAVED BY YOU</span>
-                        <h2>Favourite wallpapers</h2>
+                        <h2>Favourite creations</h2>
                     </div>
                     <a href="./index.html#featured">Find more</a>
                 </div>
@@ -249,31 +250,30 @@
                             Create your BharatVarsh creator channel
                         </h2>
                         <p id="creatorDescription">
-                            Reserve a private channel draft now. Public uploads,
-                            followers and verification will be enabled in the
-                            next creator milestone.
+                            Create your channel instantly. No admin approval is
+                            required to become a creator or open Creator Studio.
                         </p>
                     </div>
                     <button
                         type="button"
                         id="createCreatorChannel"
                     >
-                        Create channel draft
+                        Create channel
                     </button>
                 </div>
 
                 <form
-                    id="creatorApplicationForm"
+                    id="creatorChannelForm"
                     class="creator-application-form"
-                    hidden
                 >
                     <div class="panel-heading">
                         <div>
-                            <span class="eyebrow">CREATOR ONBOARDING</span>
-                            <h2>Complete your channel application</h2>
+                            <span class="eyebrow">CREATOR CHANNEL</span>
+                            <h2>Set up your public creator identity</h2>
                             <p>
-                                Only your approved channel information becomes
-                                public. Your email remains private.
+                                Your channel becomes active immediately after
+                                you submit this form. Only your public channel
+                                information is shown to visitors.
                             </p>
                         </div>
                     </div>
@@ -300,7 +300,7 @@
                         </label>
 
                         <label>
-                            Primary category
+                            Primary creator category
                             <select
                                 id="creatorCategory"
                                 required
@@ -308,10 +308,10 @@
                                 <option value="">Select category</option>
                                 <option value="Wallpapers">Wallpapers</option>
                                 <option value="Photography">Photography</option>
-                                <option value="Wedding & Events">Wedding & Events</option>
-                                <option value="Art & Design">Art & Design</option>
-                                <option value="Indian Culture">Indian Culture</option>
-                                <option value="Nature">Nature</option>
+                                <option value="Video Creator">Video Creator</option>
+                                <option value="Art & Design">Art &amp; Design</option>
+                                <option value="Culture & Heritage">Culture &amp; Heritage</option>
+                                <option value="Nature & Travel">Nature &amp; Travel</option>
                                 <option value="Other">Other</option>
                             </select>
                         </label>
@@ -350,23 +350,24 @@
 
                     <button
                         type="submit"
-                        id="submitCreatorApplication"
+                        id="createCreatorChannelNow"
                     >
-                        Submit for admin verification
+                        Create channel instantly
                     </button>
                 </form>
 
                 <div
-                    id="creatorApplicationStatus"
+                    id="creatorChannelStatus"
                     class="creator-application-status"
                     hidden
                 >
-                    <span
-                        id="creatorApplicationBadge"
-                        class="creator-status"
-                    ></span>
-                    <h2 id="creatorApplicationHeading"></h2>
-                    <p id="creatorApplicationMessage"></p>
+                    <span class="creator-status">Active creator</span>
+                    <h2>Your creator channel is live</h2>
+                    <p>
+                        Creator Studio is available now. Channel creation does
+                        not require admin permission. Individual uploads still
+                        pass content moderation before public publishing.
+                    </p>
                 </div>
             </section>
         </div>

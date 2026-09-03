@@ -146,7 +146,7 @@ async function verifyFirebaseToken(token, projectId) {
     return payload.sub;
 }
 
-async function getApprovedCreator(
+async function getActiveCreator(
     token,
     projectId,
     uid
@@ -164,8 +164,9 @@ async function getApprovedCreator(
 
     const document = await response.json();
 
-    return document.fields?.status?.stringValue ===
-        "approved"
+    return ["active", "approved"].includes(
+        document.fields?.status?.stringValue
+    )
         ? document
         : null;
 }
@@ -215,7 +216,7 @@ async function handleSignatureRequest(
         );
     }
 
-    const creator = await getApprovedCreator(
+    const creator = await getActiveCreator(
         token,
         env.FIREBASE_PROJECT_ID,
         uid
@@ -223,7 +224,7 @@ async function handleSignatureRequest(
 
     if (!creator) {
         return jsonResponse(
-            { error: "Approved creator access is required." },
+            { error: "An active creator channel is required." },
             403,
             origin
         );

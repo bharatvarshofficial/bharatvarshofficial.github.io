@@ -99,27 +99,16 @@
         <section class="creator-review-section">
             <div class="section-title">
                 <div>
-                    <h2>Creator Verification Queue</h2>
+                    <h2>Creator Channels</h2>
                     <p>
-                        Review creator channel applications before uploads
-                        and public channel access are enabled.
+                        Creator channels activate automatically after the user
+                        completes channel setup. Admin approval is not required.
+                        Moderation remains focused on submitted public media.
                     </p>
                 </div>
-                <span
-                    id="creatorApplicationCount"
-                    class="connection-badge connection-off"
-                >
-                    0 pending
+                <span class="connection-badge connection-on">
+                    Instant activation
                 </span>
-            </div>
-
-            <div
-                id="creatorApplicationsList"
-                class="creator-applications-list"
-            >
-                <div class="empty-state">
-                    Loading creator applications…
-                </div>
             </div>
         </section>
 
@@ -147,6 +136,78 @@
                 <div class="empty-state">
                     Loading creator media submissions…
                 </div>
+            </div>
+        </section>
+
+
+        <section class="creator-earnings-admin-section">
+            <div class="section-title">
+                <div>
+                    <h2>Creator Earnings &amp; Payouts</h2>
+                    <p>
+                        Creator channel access is automatic. This financial
+                        panel is only for trusted monetization settlement and
+                        payout processing.
+                    </p>
+                </div>
+                <span
+                    id="creatorPayoutCount"
+                    class="connection-badge connection-off"
+                >
+                    0 pending payouts
+                </span>
+            </div>
+
+            <form id="creatorEarningsForm" class="creator-earnings-admin-form">
+                <div class="form-group">
+                    <label for="earningsCreatorUid">Creator UID</label>
+                    <input
+                        id="earningsCreatorUid"
+                        type="text"
+                        placeholder="Firebase creator UID"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="earningsMonetizationStatus">Monetization status</label>
+                    <select id="earningsMonetizationStatus" required>
+                        <option value="not_eligible">Not eligible</option>
+                        <option value="eligible">Eligible</option>
+                        <option value="under_review">Under review</option>
+                        <option value="monetized">Monetized</option>
+                        <option value="paused">Paused</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="earningsAttributedProfit">Verified creator-attributed platform profit (₹)</label>
+                    <input
+                        id="earningsAttributedProfit"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value="0"
+                    >
+                    <small id="earningsSharePreview">Creator share (20%): ₹0.00</small>
+                </div>
+
+                <button type="submit" id="creatorEarningsSaveBtn">
+                    Save monetization update
+                </button>
+            </form>
+
+            <p class="financial-note">
+                Profit-share policy: creator gets exactly <strong>20%</strong> of verified net platform profit
+                attributable to that creator's eligible content/activity. Enter creator-attributed profit, not the
+                payout amount; the dashboard calculates the 20% share. Creators cannot edit their own balances.
+            </p>
+
+            <div
+                id="creatorPayoutRequestsList"
+                class="creator-payout-requests-list"
+            >
+                <div class="empty-state">Loading payout requests…</div>
             </div>
         </section>
 

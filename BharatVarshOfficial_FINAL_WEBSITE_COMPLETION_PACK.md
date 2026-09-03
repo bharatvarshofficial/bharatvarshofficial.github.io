@@ -6,20 +6,33 @@
 
 ---
 
+
+## 2026-09-03 CREATOR PLATFORM OVERRIDE — HIGHEST PRIORITY
+
+This section overrides any older creator-approval or device-advisor instructions later in this file.
+
+- BharatVarshOfficial is **not only a wallpaper website**. It is a broader creator platform for wallpapers, photography/images, digital art and videos.
+- Creator channel creation is **instant self-service** after sign-in. Do **not** require a creator application or repeated admin approval to create/open a channel.
+- Admin moderation remains required for each creator media submission before that media becomes public.
+- Creator Studio includes an earnings/monetization area inspired by creator platforms: estimated earnings, available balance, lifetime earnings, monetization status, minimum payout and payout requests.
+- Financial values are trusted-backend/admin controlled. Creators must never be able to edit their own earnings balances.
+- Creator profit share is fixed at **20% of verified net platform profit attributable to that creator's eligible content/activity**. Do not use a fake client-side fixed rupee amount per download.
+- The previous **Smart Size Recommendation / Device Wallpaper Advisor** UI and device-specific recommendation logic are removed. The download-size selector remains with fixed presets, original quality and custom size.
+- Public creator pages should show all published creator media types, not only wallpapers.
+
 ## 0. CURRENT VERIFIED STATE — DO NOT REBUILD
 
 The following work is already completed and must be preserved:
 
 - Public BharatVarshOfficial wallpaper website exists and builds with Vite.
 - Categories, search/filter foundations, wallpaper cards, preview/details and download experience exist.
-- Device wallpaper recommendation/advisor exists.
+- Smart Size Recommendation / Device Wallpaper Advisor has been removed; manual download size selection remains.
 - Policies page and public discovery files exist.
 - Google Firebase Authentication exists.
 - Old admin password login has been removed.
 - Admin access uses exact authorized Firebase UID logic.
 - Private user profile/account foundation exists.
-- Creator onboarding/application flow exists.
-- Creator approval workflow exists.
+- Creator channel onboarding is instant self-service; creator application/approval is no longer required for channel creation.
 - Creator Studio foundation exists.
 - Creator submissions are private until admin review.
 - Admin approval publishes creator media atomically.
@@ -28,7 +41,7 @@ The following work is already completed and must be preserved:
 - Worker endpoint:
   `https://bharatvarsh-creator-upload-signature.bharatvarshofficial.workers.dev/api/cloudinary-signature`
 - Worker verifies Firebase ID tokens.
-- Worker checks approved creator status.
+- Worker checks active creator status.
 - Cloudinary API key and API secret are stored as Cloudflare Worker secrets.
 - `creator-upload-config.js` contains the live signing endpoint.
 - Creator upload security tests pass.
@@ -342,24 +355,26 @@ Do NOT show financial values until a real payout system exists.
 
 ---
 
-# 11. CREATOR MONETIZATION FOUNDATION — DO NOT FAKE PAYOUTS
+# 11. CREATOR MONETIZATION + 20% PROFIT SHARE
 
-Prepare architecture only.
+Current implementation:
+- creator monetization status
+- verified creator-attributed platform profit settlement
+- fixed creator share: **20%**
+- estimated/lifetime/available creator earnings
+- payout request flow with ₹1,000 minimum threshold
+- admin payout processing
+- creator-visible verified earnings history
 
-Possible future model:
-- creator eligibility
-- admin referral/revenue model
-- payout profile
-- payout history
-- minimum threshold
-- tax/KYC workflow
+Security requirements:
+- creators cannot write financial balances or share rates
+- only admin/trusted backend can settle profit and earnings
+- invalid/fake traffic must not be included in attributed profit
+- never claim guaranteed income
 
-For current launch:
-- show “Monetization coming later” only if needed.
-- no fake balance
-- no fake earnings
-- no fake withdrawal button
-- no claims of guaranteed income
+Future production integration:
+- connect ads/sponsorship/payment analytics so verified creator-attributed profit is ingested automatically
+- add payout provider, KYC/tax and reconciliation workflows
 
 ---
 
@@ -733,7 +748,7 @@ Implement in this order:
 - likes
 - follows
 - advanced analytics
-- monetization/payout system
+- automated ad/sponsorship profit attribution backend
 - AI-based wallpaper recommendation
 - advanced creator ranking
 - full notification system
