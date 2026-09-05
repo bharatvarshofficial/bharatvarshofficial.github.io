@@ -21,11 +21,6 @@ const PORTRAIT_PRESETS = [
         height: 1920
     },
     {
-        id: "mobile-20-9",
-        label: "Mobile 20:9",
-        width: 1080,
-        height: 2400
-    },    {
         id: "mobile-2k",
         label: "Mobile 2K",
         width: 1440,
@@ -53,11 +48,6 @@ const LANDSCAPE_PRESETS = [
         height: 1080
     },
     {
-        id: "desktop-20-9",
-        label: "Landscape 20:9",
-        width: 2400,
-        height: 1080
-    },    {
         id: "desktop-2k",
         label: "Desktop 2K",
         width: 2560,

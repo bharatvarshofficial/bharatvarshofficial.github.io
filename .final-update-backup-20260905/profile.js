@@ -70,9 +70,6 @@ const elements = {
         "creatorWebsite"
     ),
     creatorBio: document.getElementById("creatorBio"),
-    creatorRightsConfirmation: document.getElementById(
-        "creatorRightsConfirmation"
-    ),
     creatorChannelStatus: document.getElementById(
         "creatorChannelStatus"
     ),
@@ -390,7 +387,7 @@ async function createCreatorChannel(event) {
         !channelHandle ||
         !category ||
         bio.length < 20 ||
-        elements.creatorRightsConfirmation?.checked !== true
+        !elements.creatorRightsConfirmation.checked
     ) {
         showToast(
             "Complete the required fields, write at least 20 characters, and confirm your content rights."

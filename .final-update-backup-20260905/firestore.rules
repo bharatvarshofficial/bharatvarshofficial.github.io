@@ -1,0 +1,410 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.uid == "hGrTepDbtsaCoSQL5D2bBG0iZzD2";
+    }
+
+    function isOwner(userId) {
+      return isSignedIn()
+        && request.auth.uid == userId;
+    }
+
+    function isActiveCreator(userId) {
+      return isOwner(userId)
+        && exists(
+          /databases/$(database)/documents/creators/$(userId)
+        )
+        && get(
+          /databases/$(database)/documents/creators/$(userId)
+        ).data.status in ['active', 'approved'];
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId;
+
+      allow update: if isAdmin()
+        || (
+          isOwner(userId)
+          && (
+            !request.resource.data
+              .diff(resource.data)
+              .affectedKeys()
+              .hasAny(['creatorStatus'])
+            || (
+              request.resource.data.creatorStatus == 'active'
+              && existsAfter(
+                /databases/$(database)/documents/creators/$(userId)
+              )
+              && getAfter(
+                /databases/$(database)/documents/creators/$(userId)
+              ).data.status == 'active'
+            )
+          )
+        );
+      allow delete: if isAdmin();
+    }
+
+    // Legacy creator applications are read-only. New creator channels
+    // are created instantly and do not need an admin approval request.
+    match /creatorApplications/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    match /creators/{creatorId} {
+      allow read: if true;
+
+      allow create: if isOwner(creatorId)
+        && request.resource.data.uid == creatorId
+        && request.resource.data.status == 'active'
+        && request.resource.data.uploads == 0
+        && request.resource.data.followers == 0
+        && request.resource.data.keys().hasOnly([
+          'uid',
+          'channelName',
+          'channelHandle',
+          'category',
+          'website',
+          'bio',
+          'status',
+          'uploads',
+          'followers',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.channelName is string
+        && request.resource.data.channelName.size() >= 3
+        && request.resource.data.channelName.size() <= 60
+        && request.resource.data.channelHandle is string
+        && request.resource.data.channelHandle.size() >= 3
+        && request.resource.data.channelHandle.size() <= 40
+        && request.resource.data.category in [
+          'Wallpapers',
+          'Photography',
+          'Video Creator',
+          'Art & Design',
+          'Culture & Heritage',
+          'Nature & Travel',
+          'Other'
+        ]
+        && request.resource.data.website is string
+        && request.resource.data.website.size() <= 200
+        && request.resource.data.bio is string
+        && request.resource.data.bio.size() >= 20
+        && request.resource.data.bio.size() <= 500
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isAdmin()
+        || (
+          isOwner(creatorId)
+          && request.resource.data
+            .diff(resource.data)
+            .affectedKeys()
+            .hasOnly([
+              'channelName',
+              'category',
+              'website',
+              'bio',
+              'updatedAt'
+            ])
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.channelHandle == resource.data.channelHandle
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.uploads == resource.data.uploads
+          && request.resource.data.followers == resource.data.followers
+          && request.resource.data.channelName is string
+          && request.resource.data.channelName.size() >= 3
+          && request.resource.data.channelName.size() <= 60
+          && request.resource.data.category in [
+            'Wallpapers',
+            'Photography',
+            'Video Creator',
+            'Art & Design',
+            'Culture & Heritage',
+            'Nature & Travel',
+            'Other'
+          ]
+          && request.resource.data.website is string
+          && request.resource.data.website.size() <= 200
+          && request.resource.data.bio is string
+          && request.resource.data.bio.size() >= 20
+          && request.resource.data.bio.size() <= 500
+          && request.resource.data.updatedAt == request.time
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    match /creatorEarnings/{creatorId} {
+      allow read: if isOwner(creatorId) || isAdmin();
+
+      allow create: if isOwner(creatorId)
+        && request.resource.data.creatorId == creatorId
+        && request.resource.data.currency == 'INR'
+        && request.resource.data.monetizationStatus == 'not_eligible'
+        && request.resource.data.eligibleRevenue == 0
+        && request.resource.data.attributedPlatformProfit == 0
+        && request.resource.data.profitShareRate == 0.20
+        && request.resource.data.estimatedEarnings == 0
+        && request.resource.data.availableBalance == 0
+        && request.resource.data.lifetimeEarnings == 0
+        && request.resource.data.paidOut == 0
+        && request.resource.data.minimumPayout == 1000
+        && request.resource.data.keys().hasOnly([
+          'creatorId',
+          'currency',
+          'monetizationStatus',
+          'eligibleRevenue',
+          'attributedPlatformProfit',
+          'profitShareRate',
+          'estimatedEarnings',
+          'availableBalance',
+          'lifetimeEarnings',
+          'paidOut',
+          'minimumPayout',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      // Financial values are trusted-backend/admin controlled.
+      allow update, delete: if isAdmin();
+    }
+
+    match /creatorEarningTransactions/{transactionId} {
+      allow read: if isAdmin()
+        || (
+          isSignedIn()
+          && resource.data.creatorId == request.auth.uid
+        );
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /payoutRequests/{creatorId} {
+      allow read: if isOwner(creatorId) || isAdmin();
+
+      allow create: if isOwner(creatorId)
+        && request.resource.data.creatorId == creatorId
+        && request.resource.data.status == 'pending'
+        && request.resource.data.currency == 'INR'
+        && request.resource.data.amount is number
+        && request.resource.data.amount >= get(
+          /databases/$(database)/documents/creatorEarnings/$(creatorId)
+        ).data.minimumPayout
+        && request.resource.data.amount <= get(
+          /databases/$(database)/documents/creatorEarnings/$(creatorId)
+        ).data.availableBalance
+        && request.resource.data.keys().hasOnly([
+          'creatorId',
+          'amount',
+          'currency',
+          'status',
+          'requestedAt',
+          'updatedAt'
+        ])
+        && request.resource.data.requestedAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isAdmin()
+        || (
+          isOwner(creatorId)
+          && resource.data.status in ['paid', 'rejected']
+          && request.resource.data.creatorId == creatorId
+          && request.resource.data.status == 'pending'
+          && request.resource.data.currency == 'INR'
+          && request.resource.data.amount is number
+          && request.resource.data.amount >= get(
+            /databases/$(database)/documents/creatorEarnings/$(creatorId)
+          ).data.minimumPayout
+          && request.resource.data.amount <= get(
+            /databases/$(database)/documents/creatorEarnings/$(creatorId)
+          ).data.availableBalance
+          && request.resource.data.keys().hasOnly([
+            'creatorId',
+            'amount',
+            'currency',
+            'status',
+            'requestedAt',
+            'updatedAt'
+          ])
+          && request.resource.data.requestedAt == request.time
+          && request.resource.data.updatedAt == request.time
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    match /creatorMediaSubmissions/{submissionId} {
+      allow read: if isAdmin()
+        || (
+          isSignedIn()
+          && resource.data.creatorId == request.auth.uid
+        );
+
+      allow create: if isActiveCreator(request.auth.uid)
+        && request.resource.data.creatorId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.rightsConfirmed == true
+        && request.resource.data.keys().hasOnly([
+          'creatorId',
+          'title',
+          'description',
+          'category',
+          'mediaType',
+          'resourceType',
+          'secureUrl',
+          'publicId',
+          'assetId',
+          'format',
+          'bytes',
+          'width',
+          'height',
+          'duration',
+          'status',
+          'rightsConfirmed',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 3
+        && request.resource.data.title.size() <= 100
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 500
+        && request.resource.data.category in [
+          'Chhatrapati Shivaji Maharaj',
+          'Indian Army',
+          'Freedom Fighters',
+          'Temples',
+          'Festivals',
+          'Indian Culture',
+          'Nature / India',
+          'Anime',
+          'Country',
+          'Other'
+        ]
+        && request.resource.data.mediaType in [
+          'wallpapers',
+          'images',
+          'videos'
+        ]
+        && (
+          (
+            request.resource.data.mediaType in [
+              'wallpapers',
+              'images'
+            ]
+            && request.resource.data.resourceType == 'image'
+            && request.resource.data.bytes <= 26214400
+          )
+          || (
+            request.resource.data.mediaType == 'videos'
+            && request.resource.data.resourceType == 'video'
+            && request.resource.data.bytes <= 104857600
+          )
+        )
+        && request.resource.data.secureUrl is string
+        && request.resource.data.secureUrl.matches(
+          'https://res\\.cloudinary\\.com/kgxel7wp/.*'
+        )
+        && request.resource.data.publicId is string
+        && request.resource.data.publicId.size() >= 3
+        && request.resource.data.publicId.size() <= 255
+        && request.resource.data.assetId is string
+        && request.resource.data.assetId.size() >= 3
+        && request.resource.data.assetId.size() <= 255
+        && request.resource.data.format is string
+        && request.resource.data.format.size() <= 20
+        && request.resource.data.bytes is int
+        && request.resource.data.bytes > 0
+        && request.resource.data.width is int
+        && request.resource.data.width >= 0
+        && request.resource.data.height is int
+        && request.resource.data.height >= 0
+        && request.resource.data.duration is number
+        && request.resource.data.duration >= 0
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isAdmin();
+
+      allow delete: if isAdmin()
+        || (
+          isSignedIn()
+          && resource.data.creatorId == request.auth.uid
+          && resource.data.status == 'rejected'
+        );
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /wallpapers/{wallpaperId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+
+      allow update: if
+        request.resource.data
+          .diff(resource.data)
+          .affectedKeys()
+          .hasOnly(['downloads', 'updatedAt'])
+        && request.resource.data.downloads
+          == resource.data.get('downloads', 0) + 1
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    match /images/{imageId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /videos/{videoId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /newsletter/{subscriberId} {
+      allow read, delete: if isAdmin();
+
+      allow create: if
+        request.resource.data.keys().hasOnly([
+          'email',
+          'subscribedAt',
+          'active'
+        ])
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 3
+        && request.resource.data.email.size() <= 254
+        && request.resource.data.active == true
+        && request.resource.data.subscribedAt == request.time;
+
+      allow update: if
+        request.resource.data.keys().hasOnly([
+          'email',
+          'subscribedAt',
+          'active'
+        ])
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.active == true
+        && request.resource.data.subscribedAt == request.time;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

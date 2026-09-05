@@ -2345,22 +2345,16 @@ async function downloadWallpaper(
                         );
 
                 } catch (cloudinaryFetchError) {
+
                     console.warn(
-                        "Cloudinary exact-size download failed; falling back to local exact resize.",
+                        "Cloudinary download fetch failed; opening exact transformed URL.",
                         cloudinaryFetchError
                     );
 
-                    const sourceBlob =
-                        await fetchImageBlob(
-                            imageURL
-                        );
-
-                    resizedBlob =
-                        await resizeImageBlobToExactSize(
-                            sourceBlob,
-                            dimensions.width,
-                            dimensions.height
-                        );
+                    startDirectDownload(
+                        transformedURL,
+                        `${filenameBase}-${dimensions.width}x${dimensions.height}.jpg`
+                    );
 
                 }
 
